@@ -90,7 +90,7 @@ public class MapContainer extends Container {
     private MapComponent internalLightweightCmp;
     private MapComponent dummyMapComponent;
     private BrowserComponent internalBrowser;
-    private  JavascriptContext browserContext;
+    private JavascriptContext browserContext;
     private ArrayList<MapListener> listeners;
     private PointsLayer points;
     private Container mapWrapper;
@@ -889,7 +889,7 @@ public class MapContainer extends Container {
      *
      * @return max zoom level
      */
-    public int getMaxZoom() {
+    public float getMaxZoom() {
         if(internalNative == null) {
             if(internalLightweightCmp != null) {
                 return internalLightweightCmp.getMaxZoomLevel();
@@ -907,7 +907,7 @@ public class MapContainer extends Container {
      *
      * @return min zoom level
      */
-    public int getMinZoom() {
+    public float getMinZoom() {
         if(internalNative == null) {
             if(internalLightweightCmp != null) {
                 return internalLightweightCmp.getMinZoomLevel();
@@ -1013,7 +1013,7 @@ public class MapContainer extends Container {
      */
     public void zoom(Coord crd, int zoom) {
         if(internalNative != null) {
-            internalNative.setZoom(crd.getLatitude(), crd.getLongitude(), zoom);
+            internalNative.setCamera(crd.getLatitude(), crd.getLongitude(), zoom);
         } else {
             if(internalLightweightCmp != null) {
                 internalLightweightCmp.zoomTo(crd, (int)zoom);
@@ -1532,7 +1532,7 @@ public class MapContainer extends Container {
     public void setShowMyLocation(boolean showMyLocation) {
         this.showMyLocation = showMyLocation;
         if(isNativeMaps()) {
-            internalNative.setShowMyLocation(showMyLocation);
+            internalNative.setMyLocationEnabled(showMyLocation);
         }
     }
 
@@ -1549,7 +1549,7 @@ public class MapContainer extends Container {
     public final void setRotateGestureEnabled(boolean rotateGestureEnabled) {
         this.rotateGestureEnabled = rotateGestureEnabled;
         if(isNativeMaps()) {
-            internalNative.setRotateGestureEnabled(rotateGestureEnabled);
+            internalNative.setRotateGesturesEnabled(rotateGestureEnabled);
         }
     }
     

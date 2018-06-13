@@ -17,103 +17,220 @@
 package com.codename1.googlemaps;
 
 public class InternalNativeMapsImpl implements com.codename1.googlemaps.InternalNativeMaps{
+    
     public void initialize() {
     }
 
-    public double getLatitude() {
-        return 0;
+    public void setAllGesturesEnabled(boolean param) {
     }
 
-    public void setMapType(int param) {
+    public void setCompassEnabled(boolean param) {
     }
 
-    public long finishPath(long param) {
-        return 0;
+    public void setZoomControlsEnabled(boolean param) {
     }
 
-    public int getMaxZoom() {
-        return 0;
+    public void setRotateGesturesEnabled(boolean param) {
     }
 
-    public double getLongitude() {
-        return 0;
+    public void calcLatLongPosition(int param, int param1) {
     }
 
-    public void removeAllMarkers() {
+    public void setMapToolbarEnabled(boolean param) {
     }
 
-    public void addToPath(long param, double param1, double param2) {
+    public void resetMinMaxZoomPreference() {
+    }
+
+    public void setScrollGesturesEnabled(boolean param) {
+    }
+
+    public void setIndoorLevelPickerEnabled(boolean param) {
+    }
+
+    public void setZoomGesturesEnabled(boolean param) {
+    }
+
+    public void calcScreenPosition(double param, double param1) {
+    }
+
+    public void setMyLocationButtonEnabled(boolean param) {
+    }
+
+    public void setTiltGesturesEnabled(boolean param) {
+    }
+
+    public void setPadding(int param, int param1, int param2, int param3) {
+    }
+
+    public void setPosition(double param, double param1) {
+    }
+
+    public boolean isZoomGesturesEnabled() {
+        return false;
+    }
+
+    public boolean isZoomControlsEnabled() {
+        return false;
+    }
+
+    public void setZoom(float param) {
+    }
+
+    public boolean isIndoorLevelPickerEnabled() {
+        return false;
+    }
+
+    public boolean isMapToolbarEnabled() {
+        return false;
+    }
+
+    public void setTrafficEnabled(boolean param) {
+    }
+
+    public boolean isMyLocationButtonEnabled() {
+        return false;
     }
 
     public long addMarker(byte[] param, double param1, double param2, String param3, String param4, boolean param5, float param6, float param7) {
         return 0;
     }
 
-    public int getMapType() {
-        return 0;
+    public boolean isTiltGesturesEnabled() {
+        return false;
     }
 
-    public void removeMapElement(long param) {
+    public boolean isRotateGesturesEnabled() {
+        return false;
+    }
+
+    public boolean isScrollGesturesEnabled() {
+        return false;
     }
 
     public com.codename1.ui.PeerComponent createNativeMap(int param) {
         return null;
     }
 
-    public int getMinZoom() {
+    public int getMapType() {
         return 0;
     }
 
-    public long beginPath() {
+    public void setMapType(int param) {
+    }
+
+    public boolean setMapStyle(String param) {
+        return false;
+    }
+
+    public void animateCamera(double param, double param1, float param2, int param3) {
+    }
+
+    public void removeAllMarkers() {
+    }
+
+    public float getMinZoom() {
         return 0;
     }
 
-    public void setPosition(double param, double param1) {
+    public long finishPath(long param) {
+        return 0;
+    }
+
+    public void setMarkerSize(int param, int param1) {
+    }
+
+    public boolean isIndoorEnabled() {
+        return false;
+    }
+
+    public void animateZoom(float param, int param1) {
     }
 
     public float getZoom() {
         return 0;
     }
 
-    public void setZoom(double param, double param1, float param2) {
+    public float getMaxZoom() {
+        return 0;
     }
-    
-    public void setMarkerSize(int w, int h) {
-        
+
+    public int getScreenX() {
+        return 0;
+    }
+
+    public double getLatitude() {
+        return 0;
+    }
+
+    public void addToPath(long param, double param1, double param2) {
+    }
+
+    public boolean isTrafficEnabled() {
+        return false;
+    }
+
+    public double getScreenLat() {
+        return 0;
+    }
+
+    public boolean setIndoorEnabled(boolean param) {
+        return false;
+    }
+
+    public void setCamera(double param, double param1, float param2) {
+    }
+
+    public boolean isCompassEnabled() {
+        return false;
+    }
+
+    public void setMaxZoom(float param) {
+    }
+
+    public void animatePosition(double param, double param1, int param2) {
+    }
+
+    public double getLongitude() {
+        return 0;
+    }
+
+    public void removeMapElement(long param) {
+    }
+
+    public long beginPath() {
+        return 0;
+    }
+
+    public int getScreenY() {
+        return 0;
+    }
+
+    public double getScreenLon() {
+        return 0;
+    }
+
+    public void setMinZoom(float param) {
     }
 
     public void deinitialize() {
     }
 
-    public boolean isSupported() {
+    public boolean isMyLocationEnabled() {
         return false;
     }
 
-    public void calcScreenPosition(final double lat, final double lon) {
-    }
-    
-    public int getScreenX() {
-        return 0;
-    }
-    
-    public int getScreenY() {
-        return 0;
+    public void setBuildingsEnabled(boolean param) {
     }
 
-    public void calcLatLongPosition(final int x, final int y) {
-    }
-    
-    public double getScreenLat() {
-        return 0;
-    }
-    
-    public double getScreenLon() {
-        return 0;
+    public boolean isBuildingsEnabled() {
+        return false;
     }
 
-    public void setShowMyLocation(boolean show) {
+    public void setMyLocationEnabled(boolean param) {
     }
 
-    public void setRotateGestureEnabled(boolean e) {
+    public boolean isSupported() {
+        return false;
     }
 }

@@ -21,6 +21,7 @@ import android.Manifest;
 import com.codename1.io.Util;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.codename1.impl.android.AndroidNativeUtil;
 
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.LatLng;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.view.ViewGroup;
 import android.os.Bundle;
 import com.codename1.impl.android.AndroidImplementation;
@@ -151,11 +151,7 @@ public class InternalNativeMapsImpl implements LifecycleListener {
                 }
 
             });
-
         }
-
-
-
 
         private static PendingUpdate findPendingUpdate(View v) {
             synchronized(pendingUpdates) {
@@ -212,14 +208,13 @@ public class InternalNativeMapsImpl implements LifecycleListener {
     }
 
     static HashMap<View, PeerImage> peerImages = new HashMap<View,PeerImage>();
+    
     private static class PendingUpdate {
         private View view;
         private int w;
         private int h;
         long requestTime;
         Timer timer;
-
-
 
         private void schedule() {
             timer = new Timer();
@@ -241,6 +236,7 @@ public class InternalNativeMapsImpl implements LifecycleListener {
             timer.schedule(tt, 1000L);
         }
     }
+    
     static java.util.ArrayList<PendingUpdate> pendingUpdates = new java.util.ArrayList<PendingUpdate>();
 
 
@@ -263,184 +259,8 @@ public class InternalNativeMapsImpl implements LifecycleListener {
             }
         } 
     }
-    
-    public long addMarker(final byte[] icon, final double lat, final double lon, final String text, final String snippet, final boolean callback, final float anchorU, final float anchorV) {
-        uniqueIdCounter++;
-        final long key = uniqueIdCounter;
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                MarkerOptions mo = new MarkerOptions();
-                mo.anchor(anchorU, anchorV);
-                if(text != null) {
-                    mo.title(text);
-                }
-                if(icon != null) {
-                    Bitmap bmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-                    mo.icon(BitmapDescriptorFactory.fromBitmap(bmp));
-                }
-                if(snippet != null) {
-                    mo.snippet(snippet);
-                }
-                mo.position(new LatLng(lat, lon));
-
-                Marker m = mapInstance.addMarker(mo);
-                if(callback) {
-                    listeners.put(m, key);
-                }
-                markerLookup.put(key, m);
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-
-        return key;
-    }
-
-    public long beginPath() {
-        currentPath = new PolylineOptions();
-        return 1;
-    }
-
-    public void setPosition(final double lat, final double lon) {
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                mapInstance.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lat, lon)));
-                PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-    }
-
-    public float getZoom() {
-        final float[] result = new float[1];
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                result[0] = mapInstance.getCameraPosition().zoom;
-
-            }
-        });
-        return result[0];
-    }
-
-    public void setZoom(final double lat, final double lon, final float zoom) {
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                mapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), zoom));
-                PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-    }
-
-    public void addToPath(long param, double param1, double param2) {
-        currentPath.add(new LatLng(param1, param2));
-    }
-
-    public void removeAllMarkers() {
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                mapInstance.clear();
-                markerLookup.clear();
-                listeners.clear();
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-
-            }
-        });
-    }
-
-    public int getMinZoom() {
-        final int[] result = new int[1];
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                result[0] = (int)mapInstance.getMinZoomLevel();
-            }
-        });
-        return result[0];
-    }
-
-    public void removeMapElement(final long param) {
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                Marker m = markerLookup.get(param);
-                if(m != null) {
-                    m.remove();
-                    markerLookup.remove(param);
-                    listeners.remove(m);
-                    return;
-                }
-                
-                Polyline p = paths.get(param);
-                if(p != null) {
-                    p.remove();
-                    paths.remove(param);
-                }
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-    }
-
-    public double getLatitude() {
-        final double[] result = new double[1];
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                result[0] = mapInstance.getCameraPosition().target.latitude;
-            }
-        });
-        return result[0];
-    }
-    
-    public void setMarkerSize(int width, int height) {
-        // not needed right now... used only by Javascript port
-    }
-
-    public double getLongitude() {
-        final double[] result = new double[1];
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                result[0] = mapInstance.getCameraPosition().target.longitude;
-            }
-        });
-        return result[0];
-    }
-
-    public void setMapType(final int param) {
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                switch(param) {
-                    case MapContainer.MAP_TYPE_HYBRID:
-                        mapInstance.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-                        return;
-                    case MapContainer.MAP_TYPE_TERRAIN:
-                        mapInstance.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-                        return;
-                }
-                mapInstance.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-    }
-
-    public void setShowMyLocation(boolean show) {
-        if (show && !showMyLocation) {
-            if (!AndroidNativeUtil.checkForPermission(Manifest.permission.ACCESS_FINE_LOCATION, "Show My Location On Map")) {
-                //Log.p("Show my location has been disabled because permission was not granted by the user.");
-                System.out.println("Show My Location disabled because user didn't grant ACCESS_FINE_LOCATION permission");
-                return;
-            }
-            
-        }
-        showMyLocation = show;
         
-        if(mapInstance != null) {
-            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mapInstance.setMyLocationEnabled(showMyLocation);
-                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-                }
-            });            
-        }
-    }
-
     private void setupMap() {
-
     }
 
     private void installListeners() {
@@ -494,149 +314,6 @@ public class InternalNativeMapsImpl implements LifecycleListener {
                 mapInstance.getUiSettings().setRotateGesturesEnabled(rotateGestureEnabled);
             }
         });
-
-    }
-
-    public android.view.View createNativeMap(int mapId) {
-        this.mapId = mapId;
-        //if (showMyLocation) {
-        //    if (!AndroidNativeUtil.checkForPermission(Manifest.permission.ACCESS_FINE_LOCATION, "Show My Location On Map")) {
-        //        Log.p("Show my location has been disabled because permission was not granted by the user.");
-        //        showMyLocation = false;
-        //    }
-        //    
-        //}
-        final boolean[] ready = new boolean[1];
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                try {
-                    view = new MapView(AndroidNativeUtil.getActivity());
-                    view.onCreate(AndroidNativeUtil.getActivationBundle());
-                    view.getMapAsync(new OnMapReadyCallback() {
-                        @Override
-                        public void onMapReady(GoogleMap googleMap) {
-                            try {
-                                mapInstance = googleMap;
-                                installListeners();
-                            } finally {
-                                synchronized (ready) {
-                                    ready[0] = true;
-                                    ready.notifyAll();
-                                }
-                            }
-                        }
-                    });
-                    //mapInstance = view.getMap();
-
-
-                } catch (Throwable e) {
-                    System.out.println("Failed to initialize, google play services not installed: " + e);
-                    e.printStackTrace();
-                    view = null;
-                    synchronized(ready) {
-                        ready[0] = true;
-                        ready.notifyAll();
-                    }
-                    return;
-                }
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-        while (!ready[0]) {
-            Display.getInstance().invokeAndBlock(new Runnable() {
-                public void run() {
-                    synchronized(ready) {
-                        if (!ready[0]) {
-                            Util.wait(ready, 30);
-                        }
-                    }
-                }
-            });
-        }
-        return view;
-    }
-
-    public int getMapType() {
-        switch(mapInstance.getMapType()) {
-            case GoogleMap.MAP_TYPE_HYBRID:
-                return MapContainer.MAP_TYPE_HYBRID;
-            case GoogleMap.MAP_TYPE_TERRAIN:
-            case GoogleMap.MAP_TYPE_SATELLITE:
-                return MapContainer.MAP_TYPE_TERRAIN;
-        }
-        return MapContainer.MAP_TYPE_NONE;
-    }
-
-    public int getMaxZoom() {
-        final int[] result = new int[1];
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                result[0] = (int)mapInstance.getMaxZoomLevel();
-            }
-        });
-        return result[0];
-    }
-    
-    public void setRotateGestureEnabled(boolean e) {
-        rotateGestureEnabled = e;
-        if(mapInstance != null) { 
-            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mapInstance.getUiSettings().setRotateGesturesEnabled(rotateGestureEnabled);
-                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-                }
-            });
-        }
-    }
-
-    public long finishPath(long param) {
-        uniqueIdCounter++;
-        final long key = uniqueIdCounter;
-        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                paths.put(key, mapInstance.addPolyline(currentPath));
-                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
-            }
-        });
-        return key;
-    }
-
-    public void calcScreenPosition(final double lat, final double lon) {
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                lastPoint = mapInstance.getProjection().toScreenLocation(new LatLng(lat, lon));
-            }
-        });
-    }
-    
-    public int getScreenX() {
-        return lastPoint.x;
-    }
-    
-    public int getScreenY() {
-        return lastPoint.y;
-    }
-
-    public void calcLatLongPosition(final int x, final int y) {
-        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
-            public void run() {
-                lastPosition = mapInstance.getProjection().fromScreenLocation(new Point(x, y));
-            }
-        });
-    }
-    
-    public double getScreenLat() {
-        return lastPosition.latitude;
-    }
-    
-    public double getScreenLon() {
-        return lastPosition.longitude;
-    }
-        
-    public boolean isSupported() {
-        return supported;
     }
 
     public void onCreate(Bundle savedInstanceState) {
@@ -651,8 +328,6 @@ public class InternalNativeMapsImpl implements LifecycleListener {
                     }
                 });
                 //mapInstance = view.getMap();
-
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -731,8 +406,6 @@ public class InternalNativeMapsImpl implements LifecycleListener {
                     if (toRemove != null) {
                         pendingUpdates.remove(toRemove);
                     }
-
-
                 }
                 peerImages.clear();
             }
@@ -741,6 +414,91 @@ public class InternalNativeMapsImpl implements LifecycleListener {
         }
     }
 
+    
+    public boolean isSupported() {
+        return supported;
+    }
+    
+    
+    //////////////
+    //////////////
+    /////////////
+    
+    
+    public android.view.View createNativeMap(int mapId) {
+        this.mapId = mapId;
+        //if (showMyLocation) {
+        //    if (!AndroidNativeUtil.checkForPermission(Manifest.permission.ACCESS_FINE_LOCATION, "Show My Location On Map")) {
+        //        Log.p("Show my location has been disabled because permission was not granted by the user.");
+        //        showMyLocation = false;
+        //    }
+        //    
+        //}
+        final boolean[] ready = new boolean[1];
+        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    view = new MapView(AndroidNativeUtil.getActivity());
+                    view.onCreate(AndroidNativeUtil.getActivationBundle());
+                    view.getMapAsync(new OnMapReadyCallback() {
+                        @Override
+                        public void onMapReady(GoogleMap googleMap) {
+                            try {
+                                mapInstance = googleMap;
+                                installListeners();
+                            } finally {
+                                synchronized (ready) {
+                                    ready[0] = true;
+                                    ready.notifyAll();
+                                }
+                            }
+                        }
+                    });
+                    //mapInstance = view.getMap();
+
+
+                } catch (Throwable e) {
+                    System.out.println("Failed to initialize, google play services not installed: " + e);
+                    e.printStackTrace();
+                    view = null;
+                    synchronized(ready) {
+                        ready[0] = true;
+                        ready.notifyAll();
+                    }
+                    return;
+                }
+                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+            }
+        });
+        while (!ready[0]) {
+            Display.getInstance().invokeAndBlock(new Runnable() {
+                public void run() {
+                    synchronized(ready) {
+                        if (!ready[0]) {
+                            Util.wait(ready, 30);
+                        }
+                    }
+                }
+            });
+        }
+        return view;
+    }
+
+    public void initialize() {
+        AndroidNativeUtil.addLifecycleListener(this);        
+        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    view.invalidate();
+                    view.onPause();
+                    view.onResume();
+                } catch (Exception e) {
+                    Log.e(e);
+                }
+            }
+        });
+    }
+    
     public void deinitialize() {
         AndroidNativeUtil.removeLifecycleListener(this);
         synchronized(pendingUpdates) {
@@ -760,20 +518,731 @@ public class InternalNativeMapsImpl implements LifecycleListener {
 
         }
         PeerImage.clearOldest();
+    }    
+    
+	
+    //
+    //Style
+    //
+    
+    public void setMapType(final int param) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    switch(param) {
+                        case MapContainer.MAP_TYPE_HYBRID:
+                            mapInstance.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                            return;
+                        case MapContainer.MAP_TYPE_TERRAIN:
+                            mapInstance.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                            return;
+                    }
+                    mapInstance.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+    }
+    
+    public int getMapType() {
+        if(mapInstance != null) { 
+            switch(mapInstance.getMapType()) {
+                case GoogleMap.MAP_TYPE_HYBRID:
+                    return MapContainer.MAP_TYPE_HYBRID;
+                case GoogleMap.MAP_TYPE_TERRAIN:
+                case GoogleMap.MAP_TYPE_SATELLITE:
+                    return MapContainer.MAP_TYPE_TERRAIN;
+            }
+        }
+        return MapContainer.MAP_TYPE_NONE;
+    }
+    
+    public void setPadding (int left, int top, int right, int bottom) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                   mapInstance.setPadding(left, top, right, bottom);
+                }
+            });
+        }
+    }
+    
+    public boolean setMapStyle(String json) {
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                  result[0] = mapInstance.setMapStyle(new MapStyleOptions(json));
+                }
+            });
+        }
+        return result[0];
     }
 
-    public void initialize() {
-        AndroidNativeUtil.addLifecycleListener(this);        
+    public void setMyLocationEnabled(boolean show) {
+        if (show && !showMyLocation) {
+            if (!AndroidNativeUtil.checkForPermission(Manifest.permission.ACCESS_FINE_LOCATION, "Show My Location On Map")) {
+                //Log.p("Show my location has been disabled because permission was not granted by the user.");
+                System.out.println("Show My Location disabled because user didn't grant ACCESS_FINE_LOCATION permission");
+                return;
+            }
+        }
+        showMyLocation = show;
+        
+        if(mapInstance != null) {
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.setMyLocationEnabled(showMyLocation);
+                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });            
+        }
+    }
+    
+    public boolean isMyLocationEnabled() {
+    	final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.isMyLocationEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public void	setBuildingsEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                   mapInstance.setBuildingsEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public boolean isBuildingsEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.isBuildingsEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+
+    public boolean setIndoorEnabled(boolean enabled){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.setIndoorEnabled(enabled);
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    /** Gets whether indoor maps are currently enabled.*/
+    public boolean isIndoorEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.isIndoorEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public void setTrafficEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                   mapInstance.setTrafficEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public boolean isTrafficEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.isTrafficEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+      
+    
+    //
+    //UiSettings methods
+    //
+    
+    public boolean isCompassEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isCompassEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isIndoorLevelPickerEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isIndoorLevelPickerEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isMapToolbarEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isMapToolbarEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isMyLocationButtonEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isMyLocationButtonEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isRotateGesturesEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isRotateGesturesEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isScrollGesturesEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isScrollGesturesEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isTiltGesturesEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isTiltGesturesEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public boolean isZoomControlsEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isZoomControlsEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+
+    public boolean isZoomGesturesEnabled(){
+        final boolean[] result = new boolean[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getUiSettings().isZoomGesturesEnabled();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public void	setAllGesturesEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setAllGesturesEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void setCompassEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setCompassEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void	setIndoorLevelPickerEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setIndoorLevelPickerEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void	setMapToolbarEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setMapToolbarEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void	setMyLocationButtonEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setMyLocationButtonEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void setRotateGesturesEnabled(boolean enabled){
+        rotateGestureEnabled = enabled;
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setRotateGesturesEnabled(rotateGestureEnabled);
+                }
+            });
+        }
+    }
+    
+    public void	setScrollGesturesEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setScrollGesturesEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void	setTiltGesturesEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setTiltGesturesEnabled(enabled);
+                }
+            });
+        }
+    }
+    
+    public void	setZoomControlsEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setZoomControlsEnabled(enabled);
+                }
+            });
+        }
+    }
+
+    public void	setZoomGesturesEnabled(boolean enabled){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setZoomGesturesEnabled(enabled);
+                }
+            });
+        }
+    }
+    
+    
+    //
+    //Camera
+    //
+    
+    public void setPosition(final double lat, final double lon) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lat, lon)));
+                    PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+    }
+    
+    public void animatePosition(double lat, double lon, int durationMs){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(lat, lon)), durationMs, new GoogleMap.CancelableCallback() {
+                        @Override
+                        public void onFinish() {
+                            PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+
+                        @Override
+                        public void onCancel() {
+                           PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+                    }
+                    );
+                    
+                }
+            });
+        }
+    }
+    
+    public double getLatitude() {
+        final double[] result = new double[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getCameraPosition().target.latitude;
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public double getLongitude() {
+        final double[] result = new double[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getCameraPosition().target.longitude;
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    public void setZoom(float zoom){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+    }
+   
+    public void animateZoom(float zoom, int durationMs){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.animateCamera(CameraUpdateFactory.zoomTo(zoom), durationMs, new GoogleMap.CancelableCallback() {
+                        @Override
+                        public void onFinish() {
+                            PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+
+                        @Override
+                        public void onCancel() {
+                           PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+                    }
+                    );
+                    
+                }
+            });
+        }
+    }
+    
+    public float getZoom() {
+        final float[] result = new float[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getCameraPosition().zoom;
+
+                }
+            });
+        }
+        return result[0];
+    }
+
+    public void setCamera(final double lat, final double lon, final float zoom) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), zoom));
+                    PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+    }
+    
+    public void animateCamera(double lat, double lon, float zoom, int durationMs){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    mapInstance.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), zoom), durationMs, new GoogleMap.CancelableCallback() {
+                        @Override
+                        public void onFinish() {
+                            PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+
+                        @Override
+                        public void onCancel() {
+                           PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                        }
+                    }
+                    );
+                    
+                }
+            });
+        }
+    }
+    
+    public void setMaxZoom(float maxZoom){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.setMaxZoomPreference(maxZoom);
+                }
+            });
+        }
+    }
+    
+    public void setMinZoom(float minZoom){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.setMinZoomPreference(minZoom);
+                }
+            });
+        }
+    }
+      
+    public void resetMinMaxZoomPreference(){
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.resetMinMaxZoomPreference();
+                }
+            });
+        }
+    }
+
+    public float getMaxZoom() {
+        final float[] result = new float[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getMaxZoomLevel();
+                }
+            });
+        }
+        return result[0];
+    }
+
+    public float getMinZoom() {
+        final float[] result = new float[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getMinZoomLevel();
+                }
+            });
+        }
+        return result[0];
+    }
+    
+    
+    //
+    //Map elements
+    //
+    
+    public void setMarkerSize(int width, int height) {
+        // not needed right now... used only by Javascript port
+    }
+    
+    public long addMarker(final byte[] icon, final double lat, final double lon, final String text, final String snippet, final boolean callback, final float anchorU, final float anchorV) {
+        uniqueIdCounter++;
+        final long key = uniqueIdCounter;
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    MarkerOptions mo = new MarkerOptions();
+                    mo.anchor(anchorU, anchorV);
+                    if(text != null) {
+                        mo.title(text);
+                    }
+                    if(icon != null) {
+                        Bitmap bmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+                        mo.icon(BitmapDescriptorFactory.fromBitmap(bmp));
+                    }
+                    if(snippet != null) {
+                        mo.snippet(snippet);
+                    }
+                    mo.position(new LatLng(lat, lon));
+
+                    Marker m = mapInstance.addMarker(mo);
+                    if(callback) {
+                        listeners.put(m, key);
+                    }
+                    markerLookup.put(key, m);
+                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+        return key;
+    }
+    
+    public long beginPath() {
+        currentPath = new PolylineOptions();
+        return 1;
+    }
+    
+    public void addToPath(long param, double param1, double param2) {
+        currentPath.add(new LatLng(param1, param2));
+    }
+    
+    public long finishPath(long param) {
+        uniqueIdCounter++;
+        final long key = uniqueIdCounter;
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    paths.put(key, mapInstance.addPolyline(currentPath));
+                    //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+                }
+            });
+        }
+        return key;
+    }
+    
+    public void removeMapElement(final long param) {
         AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                try {
-                    view.invalidate();
-                    view.onPause();
-                    view.onResume();
-                } catch (Exception e) {
-                    Log.e(e);
+                Marker m = markerLookup.get(param);
+                if(m != null) {
+                    m.remove();
+                    markerLookup.remove(param);
+                    listeners.remove(m);
+                    return;
                 }
+                
+                Polyline p = paths.get(param);
+                if(p != null) {
+                    p.remove();
+                    paths.remove(param);
+                }
+                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
             }
         });
     }
+    
+    public void removeAllMarkers() {
+        AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                if(mapInstance != null) { 
+                    mapInstance.clear();
+                }
+                markerLookup.clear();
+                listeners.clear();
+                //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
+
+            }
+        });
+    }
+      
+    
+    
+    
+    //
+    //screen/geopgraphy conversion
+    //
+    
+    public void calcScreenPosition(final double lat, final double lon) {
+        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+            public void run() {
+                lastPoint = mapInstance.getProjection().toScreenLocation(new LatLng(lat, lon));
+            }
+        });
+    }
+    
+    public int getScreenX() {
+        return lastPoint.x;
+    }
+    
+    public int getScreenY() {
+        return lastPoint.y;
+    }
+
+    public void calcLatLongPosition(final int x, final int y) {
+        AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+            public void run() {
+                lastPosition = mapInstance.getProjection().fromScreenLocation(new Point(x, y));
+            }
+        });
+    }
+    
+    public double getScreenLat() {
+        return lastPosition.latitude;
+    }
+    
+    public double getScreenLon() {
+        return lastPosition.longitude;
+    }
+    
+    
+    
+    
 }

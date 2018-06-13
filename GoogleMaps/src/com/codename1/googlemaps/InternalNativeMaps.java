@@ -28,34 +28,180 @@ import com.codename1.ui.PeerComponent;
  */
 public interface InternalNativeMaps extends NativeInterface {
 
-    public void setMapType(int type);
-    public int getMapType();
-    public int getMaxZoom();
-    public int getMinZoom();
-    public void setMarkerSize(int width, int height);
-    public long addMarker(byte[] icon, double lat, double lon, String text, String longText, boolean callback, float anchorU, float anchorV);
-    public long beginPath();
-    public void addToPath(long pathId, double lat, double lon);
-    public long finishPath(long pathId);
-    public void removeMapElement(long id);
-    public void removeAllMarkers();
     public PeerComponent createNativeMap(int mapId);
-    public double getLatitude();
-    public double getLongitude();
-    public void setPosition(double lat, double lon);
-    public void setZoom(double lat, double lon, float zoom);
-    public float getZoom();
-    public void deinitialize();
+	
     public void initialize();
     
+    public void deinitialize();
+    
+    
+    //Style
+    
+    public void setMapType(int type);
+    
+    public int getMapType();
+    
+    /** Sets padding on the map.*/
+    public void setPadding(int left, int top, int right, int bottom);
+    
+    /** Sets the styling of the base map.*/
+    public boolean setMapStyle(String json);
+
+    /** Enables or disables the my-location layer*/
+    public void	setMyLocationEnabled(boolean enabled); //public void setShowMyLocation(boolean show);
+    
+    /** Gets the status of the my-location layer.*/
+    public boolean isMyLocationEnabled();
+    
+    /** Turns the 3D buildings layer on or off.*/
+    public void	setBuildingsEnabled(boolean enabled);
+
+    /** Returns whether 3D buildings layer is enabled.*/
+    public boolean isBuildingsEnabled();
+
+    /** Sets whether indoor maps should be enabled.*/
+    public boolean setIndoorEnabled(boolean enabled);
+    
+    /** Gets whether indoor maps are currently enabled.*/
+    public boolean isIndoorEnabled();
+    
+    /** Turns the traffic layer on or off.*/
+    public void setTrafficEnabled(boolean enabled);
+
+    /** Checks whether the map is drawing traffic data.*/
+    public boolean isTrafficEnabled();
+    
+    
+    
+    //UiSettings methods
+    
+    /** Enables or disables the compass.*/
+    public void setCompassEnabled(boolean enabled);
+    
+    /** Gets whether the compass is enabled/disabled.*/
+    public boolean isCompassEnabled();
+    
+    /** Sets whether the indoor level picker is enabled when indoor mode is enabled.*/
+    public void	setIndoorLevelPickerEnabled(boolean enabled);
+    
+    /** Gets whether the indoor level picker is enabled/disabled.*/
+    public boolean isIndoorLevelPickerEnabled();
+    
+    /** Sets the preference for whether the Map Toolbar should be enabled or disabled.*/
+    public void	setMapToolbarEnabled(boolean enabled);
+    
+    /** Gets whether the Map Toolbar is enabled/disabled. */
+    public boolean isMapToolbarEnabled();
+    
+     /** Enables or disables the my-location button.*/
+    public void	setMyLocationButtonEnabled(boolean enabled);
+    
+    /** Gets whether the my-location button is enabled/disabled.*/
+    public boolean isMyLocationButtonEnabled();
+    
+     /** Enables or disables the zoom controls.*/
+    public void	setZoomControlsEnabled(boolean enabled);
+    
+    /** Gets whether the zoom controls are enabled/disabled.*/
+    public boolean isZoomControlsEnabled();
+    
+    //TODO: disableDefaultUI 
+    
+    
+    /** Sets the preference for whether rotate gestures should be enabled or disabled.*/
+    public void setRotateGesturesEnabled(boolean enabled); //public void setRotateGestureEnabled(boolean e);
+    
+    /** Gets whether rotate gestures are enabled/disabled.*/
+    public boolean isRotateGesturesEnabled();
+    
+    /** Sets the preference for whether scroll gestures should be enabled or disabled.*/
+    public void	setScrollGesturesEnabled(boolean enabled);
+    
+    /** Gets whether scroll gestures are enabled/disabled.*/
+    public boolean isScrollGesturesEnabled();
+    
+    /** Sets the preference for whether tilt gestures should be enabled or disabled.*/
+    public void	setTiltGesturesEnabled(boolean enabled);
+    
+    /** Gets whether tilt gestures are enabled/disabled.*/
+    public boolean isTiltGesturesEnabled();
+    
+    /** Sets the preference for whether zoom gestures should be enabled or disabled.*/
+    public void	setZoomGesturesEnabled(boolean enabled);
+    
+    /** Gets whether zoom gestures are enabled/disabled.*/
+    public boolean isZoomGesturesEnabled();
+    
+    /** Sets the preference for whether all gestures should be enabled or disabled.*/
+    public void	setAllGesturesEnabled(boolean enabled);
+    
+    
+    //Camera
+    
+    public void setPosition(double lat, double lon);
+    
+    public void animatePosition(double lat, double lon, int durationMs);
+    
+    public double getLatitude();
+    
+    public double getLongitude();
+    
+    /** imediately change the map to this zoom level*/
+    public void setZoom(float zoom);
+   
+    public void animateZoom(float zoom, int durationMs);
+    
+    public float getZoom();
+    
+    public void setCamera(double lat, double lon, float zoom);
+    
+    public void animateCamera(double lat, double lon, float zoom, int durationMs);
+    
+    /** Sets a preferred upper bound for the camera zoom. */
+    public void setMaxZoom(float maxZoom);
+    
+    /** Sets a preferred lower bound for the camera zoom.*/
+    public void setMinZoom(float minZoom);
+      
+    /** Removes any previously specified upper and lower zoom bounds. */
+    public void resetMinMaxZoomPreference();
+
+    public float getMaxZoom();
+
+    public float getMinZoom();
+    
+    //TODO bearing and tilt
+    
+    
+        
+    //Map elements
+    
+    public void setMarkerSize(int width, int height);
+    
+    public long addMarker(byte[] icon, double lat, double lon, String text, String longText, boolean callback, float anchorU, float anchorV);
+    
+    public long beginPath();
+    
+    public void addToPath(long pathId, double lat, double lon);
+    
+    public long finishPath(long pathId);
+    
+    public void removeMapElement(long id);
+    
+    public void removeAllMarkers();
+ 
+        
+    //screen/geopgraphy conversion
+    
     public void calcScreenPosition(double lat, double lon);
+    
     public int getScreenX();
+    
     public int getScreenY();
 
     public void calcLatLongPosition(int x, int y);
-    public double getScreenLat();
-    public double getScreenLon();
     
-    public void setShowMyLocation(boolean show);
-    public void setRotateGestureEnabled(boolean e);
+    public double getScreenLat();
+    
+    public double getScreenLon();
 }

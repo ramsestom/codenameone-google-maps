@@ -26,34 +26,73 @@ GMSMapView *mapView;
     BOOL rotateGesture;
 }
 
--(long long)addMarker:(NSData*)param param1:(double)param1 param2:(double)param2 param3:(NSString*)param3 param4:(NSString*)param4 param5:(BOOL)param5 param6:(float)param6 param7:(float)param7;
--(long long)beginPath;
+-(BOOL)isSupported;
+-(void*)createNativeMap:(int)param;
+-(void)initialize;
+-(void)deinitialize;
+
+-(void)setMapType:(int)param;
+-(int)getMapType;
+-(void)setPadding:(int)param param1:(int)param1 param2:(int)param2 param3:(int)param3;
+-(BOOL)setMapStyle:(NSString*)param;
+-(void)setMyLocationEnabled:(BOOL)param;
+-(BOOL)isMyLocationEnabled;
+-(void)setBuildingsEnabled:(BOOL)param;
+-(BOOL)isBuildingsEnabled;
+-(BOOL)setIndoorEnabled:(BOOL)param;
+-(BOOL)isIndoorEnabled;
+-(void)setTrafficEnabled:(BOOL)param;
+-(BOOL)isTrafficEnabled;
+
+-(void)setCompassEnabled:(BOOL)param;
+-(BOOL)isCompassEnabled;
+-(void)setIndoorLevelPickerEnabled:(BOOL)param;
+-(BOOL)isIndoorLevelPickerEnabled;
+-(void)setMapToolbarEnabled:(BOOL)param;
+-(BOOL)isMapToolbarEnabled;
+-(void)setMyLocationButtonEnabled:(BOOL)param;
+-(BOOL)isMyLocationButtonEnabled;
+-(BOOL)isZoomGesturesEnabled;
+-(void)setZoomControlsEnabled:(BOOL)param;
+
+-(void)setRotateGesturesEnabled:(BOOL)param;
+-(BOOL)isRotateGesturesEnabled;
+-(void)setScrollGesturesEnabled:(BOOL)param;
+-(BOOL)isScrollGesturesEnabled;
+-(void)setTiltGesturesEnabled:(BOOL)param;
+-(BOOL)isTiltGesturesEnabled;
+-(void)setZoomGesturesEnabled:(BOOL)param;
+-(BOOL)isZoomControlsEnabled;
+-(void)setAllGesturesEnabled:(BOOL)param;
+
 -(void)setPosition:(double)param param1:(double)param1;
--(float)getZoom;
--(void)setZoom:(double)param param1:(double)param1 param2:(float)param2;
--(void)addToPath:(long long)param param1:(double)param1 param2:(double)param2;
--(void)removeAllMarkers;
--(int)getMinZoom;
--(void)removeMapElement:(long long)param;
+-(void)animatePosition:(double)param param1:(double)param1 param2:(int)param2;
 -(double)getLatitude;
 -(double)getLongitude;
--(void)setMapType:(int)param;
--(void*)createNativeMap:(int)param;
--(int)getMapType;
--(int)getMaxZoom;
--(long long)finishPath:(long long)param;
--(BOOL)isSupported;
--(void)deinitialize;
--(void)initialize;
+-(void)setZoom:(float)param;
+-(void)animateZoom:(float)param param1:(int)param1;
+-(float)getZoom;
+-(void)setCamera:(double)param param1:(double)param1 param2:(float)param2;
+-(void)animateCamera:(double)param param1:(double)param1 param2:(float)param2 param3:(int)param3;
+-(void)setMaxZoom:(float)param;
+-(void)setMinZoom:(float)param;
+-(void)resetMinMaxZoomPreference;
+-(float)getMaxZoom;
+-(float)getMinZoom;
 
 -(void)setMarkerSize:(int)param param1:(int)param1;
--(void)calcScreenPosition:(double)param  param1:(double)param1;
+-(long long)addMarker:(NSData*)param param1:(double)param1 param2:(double)param2 param3:(NSString*)param3 param4:(NSString*)param4 param5:(BOOL)param5 param6:(float)param6 param7:(float)param7;
+-(long long)beginPath;
+-(void)addToPath:(long long)param param1:(double)param1 param2:(double)param2;
+-(long long)finishPath:(long long)param;
+-(void)removeMapElement:(long long)param;
+-(void)removeAllMarkers;
+
+-(void)calcScreenPosition:(double)param param1:(double)param1;
 -(int)getScreenX;
--(int) getScreenY;
--(void) calcLatLongPosition:(int)param param1:(int)param1;
--(double) getScreenLat;
--(double) getScreenLon;
--(void)setShowMyLocation:(BOOL)param;
--(void)setRotateGestureEnabled:(BOOL)param;
+-(int)getScreenY;
+-(void)calcLatLongPosition:(int)param param1:(int)param1;
+-(double)getScreenLat;
+-(double)getScreenLon;
 
 @end

@@ -67,133 +67,8 @@
 
 var o = {};
 
-    o.initialize_ = function(callback) {
-        ready(this, function() {
-            window.theMapEl = this.el;
-            callback.complete();
-        });
-    };
-
-    o.calcScreenPosition__double_double = function(param1, param2, callback) {
-        ready(this, function() {
-            var unscaleCoord = window.cn1UnscaleCoord !== undefined ? window.cn1UnscaleCoord : function(x){return x};
-            triggerResize(this);
-            var topRight=this.map.getProjection().fromLatLngToPoint(this.map.getBounds().getNorthEast()); 
-            var bottomLeft=this.map.getProjection().fromLatLngToPoint(this.map.getBounds().getSouthWest()); 
-            var scale=Math.pow(2,this.map.getZoom());
-            this.lastPoint = this.map.getProjection().fromLatLngToPoint(new google.maps.LatLng(param1, param2));
-            this.lastPoint = new google.maps.Point(unscaleCoord((this.lastPoint.x-bottomLeft.x)*scale),unscaleCoord((this.lastPoint.y-topRight.y)*scale));
-            callback.complete();
-        });
-    };
-
-    o.getLatitude_ = function(callback) {
-        ready(this, function() {
-            triggerResize(this);
-            callback.complete(this.map.getCenter().lat());
-        });
-    };
-
-    o.removeMapElement__long = function(param1, callback) {
-        ready(this, function() {
-            this.paths = this.paths || {};
-            var line = this.paths[param1];
-            if (line) {
-                delete this.paths[param1];
-                line.setMap(null);
-            }
-            this.markerLookup = this.markerLookup || {};
-            var marker = this.markerLookup[param1];
-            if (marker) {
-                delete this.markerLookup[param1];
-                marker.setMap(null);
-            }
-            callback.complete();
-        });
-    };
-
-    o.getMinZoom_ = function(callback) {
-        ready(this, function() {
-            callback.complete(this.map.mapTypes.get(this.map.getMapTypeId()).minZoom);
-        });
-    };
-
-    o.getScreenLon_ = function(callback) {
-        ready( this, function() {
-            callback.complete(this.lastPosition.lng());
-        });
-    };
-
-    o.getLongitude_ = function(callback) {
-        ready(this, function() { 
-            callback.complete(this.map.getCenter().lng());
-        });
-    };
-
-    o.getScreenX_ = function(callback) {
-        ready(this, function() {
-            callback.complete(this.lastPoint.x);
-        });
-    };
-
-    o.setMapType__int = function(param1, callback) {
-        ready(this, function() {
-            switch (param1) {
-                case MAP_TYPE_HYBRID :
-                    this.map.setMapTypeId(google.maps.MapTypeId.HYBRID); break;
-                case MAP_TYPE_TERRAIN :
-                    this.map.setMapTypeId(google.maps.MapTypeId.TERRAIN); break;
-                default :
-                    this.map.setMapTypeId(google.maps.MapTypeId.ROADMAP); break;
-            }
-            callback.complete();
-        });
-    };
-
-    o.calcLatLongPosition__int_int = function(param1, param2, callback) {
-        ready(this, function() {
-            triggerResize(this);
-            // First convert these coordinates from cn1 coords
-            param1 = window.cn1ScaleCoord !== undefined ? window.cn1ScaleCoord(param1) : param1;
-            param2 = window.cn1ScaleCoord !== undefined ? window.cn1ScaleCoord(param2) : param2;
-            
-            // retrieve the lat lng for the far extremities of the (visible) map
-            var latLngBounds = this.map.getBounds();
-            var neBound = latLngBounds.getNorthEast();
-            var swBound = latLngBounds.getSouthWest();
-            //console.log("neBound = "+neBound+", swBound="+swBound);
-    
-            // convert the bounds in pixels
-            var neBoundInPx = this.map.getProjection().fromLatLngToPoint(neBound);
-            var swBoundInPx = this.map.getProjection().fromLatLngToPoint(swBound);
-    
-            // compute the percent of x and y coordinates related to the div containing the map; in my case the screen
-            var procX = param1/jQuery(this.el).width();
-            var procY = param2/jQuery(this.el).height();
-    
-            // compute new coordinates in pixels for lat and lng;
-            // for lng : subtract from the right edge of the container the left edge, 
-            // multiply it by the percentage where the x coordinate was on the screen
-            // related to the container in which the map is placed and add back the left boundary
-            // you should now have the Lng coordinate in pixels
-            // do the same for lat
-            var newLngInPx = (neBoundInPx.x - swBoundInPx.x) * procX + swBoundInPx.x;
-            var newLatInPx = (swBoundInPx.y - neBoundInPx.y) * procY + neBoundInPx.y;
-    
-            // convert from google point in lat lng and have fun :)
-            var newLatLng = this.map.getProjection().fromPointToLatLng(new google.maps.Point(newLngInPx, newLatInPx));
-            
-            //this.lastPosition = this.map.getProjection().fromPointToLatLng(new google.maps.Point(param1, param2));
-            this.lastPosition = newLatLng;
-            callback.complete();
-        });
-    };
-
-    o.setShowMyLocation__boolean = function(param1, callback) {
-        ready(this, function() {
-            console.log("Show my location not implemented yet in Javascript port");
-            callback.complete();
-        });
+    o.isSupported_ = function(callback) {
+        callback.complete(true);
     };
 
     o.createNativeMap__int = function(param1, callback) {
@@ -212,6 +87,8 @@ var o = {};
                 center: new google.maps.LatLng(-34.397, 150.644)
             };
             self.map = new google.maps.Map(self.el, mapOptions);
+
+            self.trafficLayer = new google.maps.TrafficLayer();
 
             //var self = this;
             var fireTapEventStatic = self.$GLOBAL$.com_codename1_googlemaps_MapContainer.fireTapEventStatic__int_int_int$async;
@@ -313,12 +190,382 @@ var o = {};
         
     };
 
+    o.initialize_ = function(callback) {
+        ready(this, function() {
+            window.theMapEl = this.el;
+            callback.complete();
+        });
+    };
+    
+    o.deinitialize_ = function(callback) {
+        ready(this, function() {
+            //jQuery(this.el).remove();
+            console.log("Deinitializing map");
+            if (this.el.parentNode) {
+                this.el.parentNode.removeChild(this.el);
+            }
+            callback.complete();
+        });
+    };
+    
+
+    //Style
+
+    o.setMapType__int = function(param1, callback) {
+        ready(this, function() {
+            switch (param1) {
+                case MAP_TYPE_HYBRID :
+                    this.map.setMapTypeId(google.maps.MapTypeId.HYBRID); break;
+                case MAP_TYPE_TERRAIN :
+                    this.map.setMapTypeId(google.maps.MapTypeId.TERRAIN); break;
+                default :
+                    this.map.setMapTypeId(google.maps.MapTypeId.ROADMAP); break;
+            }
+            callback.complete();
+        });
+    };
+
+    o.getMapType_ = function(callback) {
+        ready(this, function() {
+            var type;
+            switch (this.map.getMapTypeId()) {
+                case google.maps.MapTypeId.HYBRID :
+                    type = MAP_TYPE_HYBRID; break;
+                case google.maps.MapTypeId.TERRAIN :
+                case google.maps.MapTypeId.SATELLITE:
+                    type = MAP_TYPE_TERRAIN; break;
+                default :
+                    type = MAP_TYPE_NONE;
+                    
+            }
+            callback.complete(type);
+        });
+    };
+    
+    o.setPadding__int_int_int_int = function(param1, param2, param3, param4, callback) {
+        callback.error(new Error("Not implemented yet"));
+    };
+
+    o.setMapStyle__java_lang_String = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({styles: param1});
+            callback.complete();
+        });
+    }; 
+        
+    o.setMyLocationEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Show my location not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.isMyLocationEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Show my location not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setBuildingsEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Buildings layer not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+
+    o.isBuildingsEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Buildings layer not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setIndoorEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Indoor layer not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.isIndoorEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Indoor layer not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setTrafficEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            this.trafficLayer.setMap(param1?this.map:null);
+            callback.complete();
+        });
+    };
+    
+    o.isTrafficEnabled_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.trafficLayer.getMap() === this.map);
+        });
+    };
+    
+    
+    //UiSettings methods
+    
+    o.isCompassEnabled_ = function(callback) {
+        ready(this, function() {
+            console.log("Compass not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.setCompassEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            //console.log("Compass not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setIndoorLevelPickerEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Indoor picker not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.isIndoorLevelPickerEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Indoor picker not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+
+    o.isMapToolbarEnabled_ = function(callback) {
+        ready(this, function() {
+            console.log("Toolbar not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.setMapToolbarEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            //console.log("Toolbar not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.isMyLocationButtonEnabled_ = function(callback) {
+        ready(this, function() {
+            console.log("MyLocation Button not implemented yet in Javascript port");
+            callback.complete();
+        });
+    };
+    
+    o.setMyLocationButtonEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            //console.log("MyLocation Button not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setZoomControlsEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({zoomControl: param1});
+            callback.complete();
+        });
+    };
+
+    o.isZoomControlsEnabled_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.map.get('zoomControl') == true);
+        });
+    };
+    
+    
+    o.setRotateGesturesEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Rotate gestures not implemented yet in Javascript");
+            callback.complete();
+        });
+    };
+
+    o.isRotateGesturesEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Rotate gestures not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setScrollGesturesEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({draggable: param1});
+            callback.complete();
+        });
+    };
+    
+    o.isScrollGesturesEnabled_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.map.get('draggable') == true);
+        });
+    };
+    
+    o.setTiltGesturesEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            console.log("Tilt gestures not implemented yet in Javascript");
+            callback.complete();
+        });
+    };
+
+    o.isTiltGesturesEnabled_ = function(callback) {
+        ready(this, function() {
+            //console.log("Tilt gestures not implemented yet in Javascript port");
+            callback.complete(false);
+        });
+    };
+    
+    o.setZoomGesturesEnabled__boolean = function(param1, callback) {
+       ready(this, function() {
+            this.map.setOptions({scrollwheel: param1});
+            callback.complete();
+        });
+    };
+    
+    o.isZoomGesturesEnabled_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.map.get('scrollwheel') == true);
+        });
+    };
+    
+    o.setAllGesturesEnabled__boolean = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({gestureHandling: param1});
+            callback.complete();
+        });
+    };
+    
+    
+    //Camera
+    
+    o.setPosition__double_double = function(param1, param2, callback) {
+        ready(this, function() {
+        //console.log("Setting position");
+            this.center = new google.maps.LatLng(param1, param2);
+            this.map.setCenter(new google.maps.LatLng(param1, param2));
+            callback.complete();
+        });
+    };
+    
+    o.animatePosition__double_double_int = function(param1, param2, param3, callback) {
+        ready(this, function() {
+            console.log("Animated position change not implemented yet in Javascript port");
+            this.center = new google.maps.LatLng(param1, param2);
+            this.map.setCenter(new google.maps.LatLng(param1, param2));
+            callback.complete();
+        });
+    };
+    
+    o.getLatitude_ = function(callback) {
+        ready(this, function() {
+            triggerResize(this);
+            callback.complete(this.map.getCenter().lat());
+        });
+    };
+    
+    o.getLongitude_ = function(callback) {
+        ready(this, function() { 
+            callback.complete(this.map.getCenter().lng());
+        });
+    };
+    
+    o.setZoom__float = function(param1, callback) {
+        ready(this, function() {
+            this.map.setZoom(param1);
+            callback.complete();
+        });
+    };
+    
+    o.animateZoom__float_int = function(param1, param2, callback) {
+        ready(this, function() {
+            console.log("Animated zoom change not implemented yet in Javascript port");
+            this.map.setZoom(param1);
+            callback.complete();
+        });
+    };
+    
+    o.getZoom_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.map.getZoom());
+        });
+    };
+    
+    o.setCamera__double_double_float = function(param1, param2, param3, callback) {
+        ready(this, function() {
+            this.center = new google.maps.LatLng(param1, param2);
+            this.map.setZoom(param3);
+            this.map.setCenter(new google.maps.LatLng(param1, param2));
+            callback.complete();
+        });
+    };
+    
+    o.animateCamera__double_double_float_int = function(param1, param2, param3, param4, callback) {
+        ready(this, function() {
+            console.log("Animated camera change not implemented yet in Javascript port");
+            this.center = new google.maps.LatLng(param1, param2);
+            this.map.setZoom(param3);
+            this.map.setCenter(new google.maps.LatLng(param1, param2));
+            callback.complete();
+        });
+    };
+    
+    o.setMaxZoom__float = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({maxZoom: param1});
+            callback.complete();
+        });
+    };
+    
+    o.setMinZoom__float = function(param1, callback) {
+        ready(this, function() {
+            this.map.setOptions({minZoom: param1});
+            callback.complete();
+        });
+    };
+   
+    o.resetMinMaxZoomPreference_ = function(callback) {
+        ready(this, function() {
+            this.map.setOptions({maxZoom: null, minZoom: null});
+            callback.complete();
+        });
+    };
+    
+    o.getMaxZoom_ = function(callback) {
+        ready(this, function() {
+            var mzoom = this.map.get('maxZoom');
+            if (mzoom == null){
+                mzoom = this.map.mapTypes.get(this.map.getMapTypeId()).maxZoom;
+            }
+            callback.complete(mzoom);
+        });
+    };
+    
+    o.getMinZoom_ = function(callback) {
+        ready(this, function() {
+            var mzoom = this.map.get('minZoom');
+            if (mzoom == null){
+                mzoom = this.map.mapTypes.get(this.map.getMapTypeId()).minZoom;
+            }
+            callback.complete(mzoom);
+        });
+    };
+    
+    
+    //Map elements
+    
     o.setMarkerSize__int_int = function(w, h, callback) {
         this.markerWidth = w;
         this.markerHeight = h;
         callback.complete(null);
     };
-
+    
     o.addMarker__byte_1ARRAY_double_double_java_lang_String_java_lang_String_boolean_float_float = function(param1, lat, lon, text, snippet, cb, anchorU, anchorV, callback) {
         ready(this, function() {
             triggerResize(this);
@@ -358,14 +605,21 @@ var o = {};
             callback.complete(key);
         });
     };
-
-    o.setRotateGestureEnabled__boolean = function(param1, callback) {
+    
+    o.beginPath_ = function(callback) {
         ready(this, function() {
-            console.log("setRotateGestureEnabled not implemented yet in Javascript");
+            this.currentPath = {path : []};//new google.maps.PolylineOptions();
+            callback.complete(1);
+        });
+    };
+    
+    o.addToPath__long_double_double = function(param1, param2, param3, callback) {
+        ready(this, function() {
+            this.currentPath.path.push(new google.maps.LatLng(param2, param3));
             callback.complete();
         });
     };
-
+    
     o.finishPath__long = function(param1, callback) {
         ready(this, function() {
             var id = uniqueIdCounter++;
@@ -375,92 +629,25 @@ var o = {};
             callback.complete(id);
         });
     };
-
-    o.getMaxZoom_ = function(callback) {
+ 
+    o.removeMapElement__long = function(param1, callback) {
         ready(this, function() {
-            callback.complete(this.map.mapTypes.get(this.map.getMapTypeId()).maxZoom);
-        });
-    };
-
-    o.getMapType_ = function(callback) {
-        ready(this, function() {
-            var type;
-            switch (this.map.getMapTypeId()) {
-                case google.maps.MapTypeId.HYBRID :
-                    type = MAP_TYPE_HYBRID; break;
-                case google.maps.MapTypeId.TERRAIN :
-                case google.maps.MapTypeId.SATELLITE:
-                    type = MAP_TYPE_TERRAIN; break;
-                default :
-                    type = MAP_TYPE_NONE;
-                    
+            this.paths = this.paths || {};
+            var line = this.paths[param1];
+            if (line) {
+                delete this.paths[param1];
+                line.setMap(null);
             }
-            callback.complete(type);
-        });
-        
-    };
-
-    o.getScreenLat_ = function(callback) {
-        ready(this, function() {
-            callback.complete(this.lastPosition.lat());
-        });
-    };
-
-    o.beginPath_ = function(callback) {
-        ready(this, function() {
-            this.currentPath = {path : []};//new google.maps.PolylineOptions();
-            callback.complete(1);
-        });
-    };
-
-    o.setPosition__double_double = function(param1, param2, callback) {
-        ready(this, function() {
-        //console.log("Setting position");
-            this.center = new google.maps.LatLng(param1, param2);
-            this.map.setCenter(new google.maps.LatLng(param1, param2));
-            callback.complete();
-        });
-    };
-
-    o.deinitialize_ = function(callback) {
-        ready(this, function() {
-            //jQuery(this.el).remove();
-            console.log("Deinitializing map");
-            if (this.el.parentNode) {
-                this.el.parentNode.removeChild(this.el);
+            this.markerLookup = this.markerLookup || {};
+            var marker = this.markerLookup[param1];
+            if (marker) {
+                delete this.markerLookup[param1];
+                marker.setMap(null);
             }
             callback.complete();
         });
     };
-
-    o.getZoom_ = function(callback) {
-        ready(this, function() {
-            callback.complete(this.map.getZoom());
-        });
-    };
-
-    o.setZoom__double_double_float = function(param1, param2, param3, callback) {
-        ready(this, function() {
-            this.center = new google.maps.LatLng(param1, param2);
-            this.map.setZoom(param3);
-            this.map.setCenter(new google.maps.LatLng(param1, param2));
-            callback.complete();
-        });
-    };
-
-    o.getScreenY_ = function(callback) {
-        ready(this, function() {
-            callback.complete(this.lastPoint.y);
-        });
-    };
-
-    o.addToPath__long_double_double = function(param1, param2, param3, callback) {
-        ready(this, function() {
-            this.currentPath.path.push(new google.maps.LatLng(param2, param3));
-            callback.complete();
-        });
-    };
-
+    
     o.removeAllMarkers_ = function(callback) {
         ready(this, function() {
             var toRemove = [];
@@ -489,10 +676,86 @@ var o = {};
             callback.complete();
         });
     };
-
-    o.isSupported_ = function(callback) {
-        callback.complete(true);
+    
+    
+    //screen/geopgraphy conversion
+        
+    o.calcScreenPosition__double_double = function(param1, param2, callback) {
+        ready(this, function() {
+            var unscaleCoord = window.cn1UnscaleCoord !== undefined ? window.cn1UnscaleCoord : function(x){return x};
+            triggerResize(this);
+            var topRight=this.map.getProjection().fromLatLngToPoint(this.map.getBounds().getNorthEast()); 
+            var bottomLeft=this.map.getProjection().fromLatLngToPoint(this.map.getBounds().getSouthWest()); 
+            var scale=Math.pow(2,this.map.getZoom());
+            this.lastPoint = this.map.getProjection().fromLatLngToPoint(new google.maps.LatLng(param1, param2));
+            this.lastPoint = new google.maps.Point(unscaleCoord((this.lastPoint.x-bottomLeft.x)*scale),unscaleCoord((this.lastPoint.y-topRight.y)*scale));
+            callback.complete();
+        });
     };
+
+    o.getScreenX_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.lastPoint.x);
+        });
+    };
+   
+    o.getScreenY_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.lastPoint.y);
+        });
+    };
+    
+     o.calcLatLongPosition__int_int = function(param1, param2, callback) {
+        ready(this, function() {
+            triggerResize(this);
+            // First convert these coordinates from cn1 coords
+            param1 = window.cn1ScaleCoord !== undefined ? window.cn1ScaleCoord(param1) : param1;
+            param2 = window.cn1ScaleCoord !== undefined ? window.cn1ScaleCoord(param2) : param2;
+            
+            // retrieve the lat lng for the far extremities of the (visible) map
+            var latLngBounds = this.map.getBounds();
+            var neBound = latLngBounds.getNorthEast();
+            var swBound = latLngBounds.getSouthWest();
+            //console.log("neBound = "+neBound+", swBound="+swBound);
+    
+            // convert the bounds in pixels
+            var neBoundInPx = this.map.getProjection().fromLatLngToPoint(neBound);
+            var swBoundInPx = this.map.getProjection().fromLatLngToPoint(swBound);
+    
+            // compute the percent of x and y coordinates related to the div containing the map; in my case the screen
+            var procX = param1/jQuery(this.el).width();
+            var procY = param2/jQuery(this.el).height();
+    
+            // compute new coordinates in pixels for lat and lng;
+            // for lng : subtract from the right edge of the container the left edge, 
+            // multiply it by the percentage where the x coordinate was on the screen
+            // related to the container in which the map is placed and add back the left boundary
+            // you should now have the Lng coordinate in pixels
+            // do the same for lat
+            var newLngInPx = (neBoundInPx.x - swBoundInPx.x) * procX + swBoundInPx.x;
+            var newLatInPx = (swBoundInPx.y - neBoundInPx.y) * procY + neBoundInPx.y;
+    
+            // convert from google point in lat lng and have fun :)
+            var newLatLng = this.map.getProjection().fromPointToLatLng(new google.maps.Point(newLngInPx, newLatInPx));
+            
+            //this.lastPosition = this.map.getProjection().fromPointToLatLng(new google.maps.Point(param1, param2));
+            this.lastPosition = newLatLng;
+            callback.complete();
+        });
+    };
+
+    o.getScreenLat_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.lastPosition.lat());
+        });
+    };
+
+    o.getScreenLon_ = function(callback) {
+        ready( this, function() {
+            callback.complete(this.lastPosition.lng());
+        });
+    };
+
 
 exports.com_codename1_googlemaps_InternalNativeMaps= o;
 
