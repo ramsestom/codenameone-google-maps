@@ -202,7 +202,7 @@
                 
                 setZoom: function(zoom){ 
                     this.ready(function(){
-                        this.map.setZoom(zoom);
+                        this.map.setZoom(Math.round(zoom)); //javascript google map api is expecting integer zoom levels as it is working with tile images and not vectors
                     });
                 },
                 

@@ -294,7 +294,7 @@ public class MapLayout extends Layout implements MapListener {
         }
 
         @Override
-        public void mapPositionUpdated(Component source, int zoom, Coord center) {
+        public void mapPositionUpdated(Component source, float zoom, Coord center) {
             //if (true) return;
             Runnable r = new Runnable() {
                 public void run() {

@@ -415,7 +415,7 @@ public class MapContainer extends Container {
 
                         public void onSucess(BrowserComponent.JSRef value) {
                             String[] parts = Util.split(value.getValue(), ",");
-                            int zoom = Integer.parseInt(parts[0]);
+                            float zoom = Float.parseFloat(parts[0]);
                             double lat  = Double.parseDouble(parts[1]);
                             double lon = Double.parseDouble(parts[2]);
                             fireMapListenerEvent(zoom, lat, lon);
@@ -1013,7 +1013,7 @@ public class MapContainer extends Container {
                 //        "setCameraPosition", 
                 //        new Object[]{crd.getLatitude(), crd.getLongitude()}
                 //);
-                dummyMapComponent.zoomTo(crd, (int)getZoom());
+                dummyMapComponent.zoomTo(crd, Math.round(getZoom()));
                 browserBridge.ready(()->{
                     internalBrowser.execute(BRIDGE+".setCameraPosition(${0}, ${1})", new Object[]{crd.getLatitude(), crd.getLongitude()});
                 });
@@ -1059,14 +1059,16 @@ public class MapContainer extends Container {
         if(internalNative != null) {
             internalNative.setZoom(zoom);
         } else {
+            //javascript or lightweighted map components do not support float zoom values. So convert it to int
+            int izoom = Math.round(zoom);
             if(internalLightweightCmp != null) {
-                internalLightweightCmp.setZoomLevel(Math.round(zoom));
+                internalLightweightCmp.setZoomLevel(izoom);
             } else {
                 //browserBridge.waitForReady();
                 //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
-                dummyMapComponent.setZoomLevel(Math.round(zoom));
+                dummyMapComponent.setZoomLevel(izoom);
                 browserBridge.ready(()->{
-                    internalBrowser.execute(BRIDGE+".setZoom(${0})", new Object[]{zoom});
+                    internalBrowser.execute(BRIDGE+".setZoom(${0})", new Object[]{izoom});
                 });
             }
         }
@@ -1136,14 +1138,14 @@ public class MapContainer extends Container {
         if(internalNative != null) {
             internalNative.setCamera(crd.getLatitude(), crd.getLongitude(), zoom);
         } else {
+            //javascript or lightweighted map components do not support float zoom values. So convert it to int
+            int izoom = Math.round(zoom);
             if(internalLightweightCmp != null) {
-                internalLightweightCmp.zoomTo(crd, Math.round(zoom));
+                internalLightweightCmp.zoomTo(crd, izoom);
             } else {
-                //browserBridge.waitForReady();
-                //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
-                dummyMapComponent.zoomTo(crd, Math.round(zoom));
+                dummyMapComponent.zoomTo(crd, izoom);
                 browserBridge.ready(()->{
-                    internalBrowser.execute(BRIDGE+".setZoom(${0}, ${1}, ${2})", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
+                    internalBrowser.execute(BRIDGE+".setCamera(${0}, ${1}, ${2})", new Object[]{ crd.getLatitude(), crd.getLongitude(), izoom});
                 });
             }
         }
@@ -1447,7 +1449,7 @@ public class MapContainer extends Container {
      * @param lat
      * @param lon 
      */
-    public static void fireMapChangeEvent(int mapId, final int zoom, final double lat, final double lon) {
+    public static void fireMapChangeEvent(int mapId, final float zoom, final double lat, final double lon) {
         final MapContainer mc = instances.get(mapId);
         if(mc != null) {
             if(!Display.getInstance().isEdt()) {
@@ -1544,15 +1546,17 @@ public class MapContainer extends Container {
         }
     }
     
-    void fireMapListenerEvent(int zoom, double lat, double lon) {
+    void fireMapListenerEvent(float zoom, double lat, double lon) {
+        float rzoom = zoom;
         // assuming always EDT
         if (dummyMapComponent != null) {
-            dummyMapComponent.zoomTo(new Coord(lat, lon), zoom);
+            rzoom = Math.round(zoom); //Should already be an integer in fact. But in case of... 
+            dummyMapComponent.zoomTo(new Coord(lat, lon), (int) rzoom);
         }
         if(listeners != null) {
             Coord c = new Coord(lat, lon);
             for(MapListener l : listeners) {
-                l.mapPositionUpdated(this, zoom, c);
+                l.mapPositionUpdated(this, rzoom, c);
             }
         }
     }

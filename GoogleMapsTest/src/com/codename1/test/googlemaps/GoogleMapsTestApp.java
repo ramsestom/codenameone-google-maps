@@ -75,11 +75,10 @@ public class GoogleMapsTestApp {
         cnt.disableDefaultUI();
         cnt.disableAllGestures();
         //final MapContainer cnt = new MapContainer();
-        cnt.setCameraPosition(new Coord(-26.1486233, 28.67401229999996));//this breaks the code //because the Google map is not loaded yet
+        cnt.setCamera(new Coord(-26.1486233, 28.67401229999996), 16);//this breaks the code //because the Google map is not loaded yet
         cnt.addMapListener(new MapListener() {
-
             @Override
-            public void mapPositionUpdated(Component source, int zoom, Coord center) {
+            public void mapPositionUpdated(Component source, float zoom, Coord center) {
                 System.out.println("Map position updated: zoom="+zoom+", Center="+center);
             }
             
@@ -97,7 +96,7 @@ public class GoogleMapsTestApp {
         System.out.println("Max zoom is "+maxZoom);
         Button btnMoveCamera = new Button("Move Camera");
         btnMoveCamera.addActionListener(e->{
-            cnt.setCameraPosition(new Coord(-33.867, 151.206));
+            cnt.setCamera(new Coord(-33.867, 151.206), 16);
         });
         Style s = new Style();
         s.setFgColor(0xff0000);
@@ -106,7 +105,6 @@ public class GoogleMapsTestApp {
         
         Button btnAddMarker = new Button("Add Marker");
         btnAddMarker.addActionListener(e->{
-           
             cnt.setCameraPosition(new Coord(41.889, -87.622));
             cnt.addMarker(EncodedImage.createFromImage(markerImg, false), cnt.getCameraPosition(), "Hi marker", "Optional long description", new ActionListener() {
                 public void actionPerformed(ActionEvent evt) {
@@ -119,7 +117,6 @@ public class GoogleMapsTestApp {
         
         Button btnAddPath = new Button("Add Path");
         btnAddPath.addActionListener(e->{
-            
             cnt.addPath(
                     cnt.getCameraPosition(),
                     new Coord(-33.866, 151.195), // Sydney
@@ -144,7 +141,7 @@ public class GoogleMapsTestApp {
             cnt.addMapListener(new MapListener() {
 
                 @Override
-                public void mapPositionUpdated(Component source, int zoom, Coord c) {
+                public void mapPositionUpdated(Component source, float zoom, Coord c) {
                     
                     if (Math.abs(c.getLatitude() - center.getLatitude()) > .001 || Math.abs(c.getLongitude() - center.getLongitude()) > .001) {
                         return;
@@ -161,7 +158,7 @@ public class GoogleMapsTestApp {
                 }
                 
             });
-            cnt.setCamera(center, (int)zoom);
+            cnt.setCamera(center, zoom);
             while (!finished[0]) {
                 Display.getInstance().invokeAndBlock(()->{
                     while (!finished[0]) {
@@ -181,11 +178,11 @@ public class GoogleMapsTestApp {
                     zoom -= 1;
                     final boolean[] done = new boolean[1];
                     
-                    final int fzoom = (int)zoom;
+                    final float fzoom = zoom;
                     cnt.addMapListener(new MapListener() {
 
                         @Override
-                        public void mapPositionUpdated(Component source, int zm, Coord center) {
+                        public void mapPositionUpdated(Component source, float zm, Coord center) {
                             
                             if (zm == fzoom) {
                                 final MapListener fthis = this;
@@ -218,9 +215,10 @@ public class GoogleMapsTestApp {
                     zoom += 1;
                     final boolean[] done = new boolean[1];
                     
-                    final int fzoom = (int)zoom;
+                    final float fzoom = zoom;
                     cnt.addMapListener(new MapListener() {
-                        public void mapPositionUpdated(Component source, int zm, Coord center)  {
+                        @Override
+                        public void mapPositionUpdated(Component source, float zm, Coord center)  {
                             if (zm == fzoom) {
                                 final MapListener fthis = this;
                                 Display.getInstance().callSerially(()->{
@@ -233,7 +231,7 @@ public class GoogleMapsTestApp {
                             }
                         }
                     });
-                    cnt.setCamera(center, (int)zoom);
+                    cnt.setCamera(center, zoom);
                     while (!done[0]) {
                         Display.getInstance().invokeAndBlock(()->{
                             while (!done[0]) {
@@ -245,7 +243,7 @@ public class GoogleMapsTestApp {
                     
                 }
                 zoom -= 1;
-                cnt.setCamera(center, (int)zoom);
+                cnt.setCamera(center, zoom);
                 cnt.addTapListener(null);
             }
             

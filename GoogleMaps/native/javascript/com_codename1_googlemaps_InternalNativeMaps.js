@@ -485,7 +485,7 @@ var o = {};
     
     o.setZoom__float = function(param1, callback) {
         ready(this, function() {
-            this.map.setZoom(param1);
+            this.map.setZoom(Math.round(param1)); //round zoom to integer as float zoom levels cause issues in the javascript google map api (it is only partially supported)
             callback.complete();
         });
     };

@@ -116,12 +116,10 @@ private void initStarRankStyle(Style s, Image star) {
         map.addMapListener(new MapListener() {
 
             @Override
-            public void mapPositionUpdated(Component source, int zoom, Coord center) {
+            public void mapPositionUpdated(Component source, float zoom, Coord center) {
                 updateMapPosition(zoom, center);
             }
-            
         });
-        
         
         setLayout(new BorderLayout());
         add(BorderLayout.CENTER, tabs);
@@ -134,18 +132,17 @@ private void initStarRankStyle(Style s, Image star) {
     }
     
     public void updateMapPosition() {
-        updateMapPosition((int)map.getZoom(), map.getCameraPosition());
+        updateMapPosition(map.getZoom(), map.getCameraPosition());
     }
     
-    public void updateMapPosition(int zoom, Coord center) {
+    public void updateMapPosition(float zoom, Coord center) {
         centerCoords.setText(coordString(center));
         BoundingBox bbox = map.getBoundingBox();
         swCoord.setText(coordString(bbox.getSouthWest()));
         neCoord.setText(coordString(bbox.getNorthEast()));
         zoomSlider.setMinValue((int)map.getMinZoom());
         zoomSlider.setMaxValue((int)map.getMaxZoom());
-        
-        zoomSlider.setProgress(zoom);
+        zoomSlider.setProgress((int)zoom);
         revalidate();
     }
     
