@@ -91,7 +91,7 @@ private void initStarRankStyle(Style s, Image star) {
         zoomSlider.setMaxValue(100);
         zoomSlider.setProgress(50);
         zoomSlider.addActionListener(ze->{
-            map.zoom(map.getCameraPosition(), zoomSlider.getProgress());
+            map.setCamera(map.getCameraPosition(), zoomSlider.getProgress());
         });
         
         Tabs tabs = new Tabs();
@@ -142,8 +142,8 @@ private void initStarRankStyle(Style s, Image star) {
         BoundingBox bbox = map.getBoundingBox();
         swCoord.setText(coordString(bbox.getSouthWest()));
         neCoord.setText(coordString(bbox.getNorthEast()));
-        zoomSlider.setMinValue(map.getMinZoom());
-        zoomSlider.setMaxValue(map.getMaxZoom());
+        zoomSlider.setMinValue((int)map.getMinZoom());
+        zoomSlider.setMaxValue((int)map.getMaxZoom());
         
         zoomSlider.setProgress(zoom);
         revalidate();
@@ -157,7 +157,7 @@ private void initStarRankStyle(Style s, Image star) {
     private Button createMarkerButton(MapObject mo, String label, Image icon, final Coord location) {
         Button b = new Button(label, icon);
         b.addActionListener(e->{
-            map.zoom(location, (int)map.getZoom());
+            map.setCamera(location, (int)map.getZoom());
         });
         
         return b;

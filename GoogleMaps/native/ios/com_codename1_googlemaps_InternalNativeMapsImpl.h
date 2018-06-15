@@ -54,6 +54,7 @@ GMSMapView *mapView;
 -(BOOL)isMyLocationButtonEnabled;
 -(BOOL)isZoomGesturesEnabled;
 -(void)setZoomControlsEnabled:(BOOL)param;
+-(void)disableDefaultUI;
 
 -(void)setRotateGesturesEnabled:(BOOL)param;
 -(BOOL)isRotateGesturesEnabled;
@@ -79,6 +80,11 @@ GMSMapView *mapView;
 -(void)resetMinMaxZoomPreference;
 -(float)getMaxZoom;
 -(float)getMinZoom;
+-(void)setBearing:(float)param;
+-(float)getBearing;
+-(void)setTilt:(float)param;
+-(float)getTilt;
+-(void)stopAnimation;
 
 -(void)setMarkerSize:(int)param param1:(int)param1;
 -(long long)addMarker:(NSData*)param param1:(double)param1 param2:(double)param2 param3:(NSString*)param3 param4:(NSString*)param4 param5:(BOOL)param5 param6:(float)param6 param7:(float)param7;

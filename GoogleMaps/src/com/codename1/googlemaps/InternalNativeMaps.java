@@ -105,7 +105,8 @@ public interface InternalNativeMaps extends NativeInterface {
     /** Gets whether the zoom controls are enabled/disabled.*/
     public boolean isZoomControlsEnabled();
     
-    //TODO: disableDefaultUI 
+    /** Disable all default UI buttons */
+    public void disableDefaultUI();
     
     
     /** Sets the preference for whether rotate gestures should be enabled or disabled.*/
@@ -170,10 +171,21 @@ public interface InternalNativeMaps extends NativeInterface {
 
     public float getMinZoom();
     
-    //TODO bearing and tilt
+    /** Set the direction that the camera is pointing in, in degrees clockwise from north. */
+    public void setBearing(float angle);
+
+    public float getBearing();
     
+    /** Set the angle, in degrees, of the camera angle from the nadir (directly facing the Earth). */
+    public void setTilt(float angle);
+
+    public float getTilt();
     
-        
+    /** Stops the camera animation if there is one in progress. */
+    public void stopAnimation();
+    
+
+    
     //Map elements
     
     public void setMarkerSize(int width, int height);

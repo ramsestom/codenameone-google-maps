@@ -536,6 +536,12 @@ public class InternalNativeMapsImpl implements LifecycleListener {
                         case MapContainer.MAP_TYPE_TERRAIN:
                             mapInstance.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
                             return;
+                        case MapContainer.MAP_TYPE_SATELLITE:
+                            mapInstance.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                            return;
+                        case MapContainer.MAP_TYPE_NONE:
+                            mapInstance.setMapType(GoogleMap.MAP_TYPE_NONE);
+                            return;
                     }
                     mapInstance.setMapType(GoogleMap.MAP_TYPE_NORMAL);
                     //PeerImage.submitUpdate(view, view.getWidth(), view.getHeight());
@@ -547,11 +553,14 @@ public class InternalNativeMapsImpl implements LifecycleListener {
     public int getMapType() {
         if(mapInstance != null) { 
             switch(mapInstance.getMapType()) {
+                case GoogleMap.MAP_TYPE_NORMAL:
+                    return MapContainer.MAP_TYPE_NORMAL;
                 case GoogleMap.MAP_TYPE_HYBRID:
                     return MapContainer.MAP_TYPE_HYBRID;
                 case GoogleMap.MAP_TYPE_TERRAIN:
-                case GoogleMap.MAP_TYPE_SATELLITE:
                     return MapContainer.MAP_TYPE_TERRAIN;
+                case GoogleMap.MAP_TYPE_SATELLITE:
+                    return MapContainer.MAP_TYPE_SATELLITE;
             }
         }
         return MapContainer.MAP_TYPE_NONE;
@@ -848,6 +857,23 @@ public class InternalNativeMapsImpl implements LifecycleListener {
             });
         }
     }
+    
+    public void disableDefaultUI() {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.getUiSettings().setCompassEnabled(false);
+                    mapInstance.getUiSettings().setIndoorLevelPickerEnabled(false);
+                    mapInstance.getUiSettings().setMapToolbarEnabled(false);
+                    mapInstance.getUiSettings().setMyLocationButtonEnabled(false);
+                    mapInstance.getUiSettings().setZoomControlsEnabled(false);
+                }
+            });
+        }
+    }
+    
+    
 
     public void setRotateGesturesEnabled(boolean enabled){
         rotateGestureEnabled = enabled;
@@ -1103,6 +1129,81 @@ public class InternalNativeMapsImpl implements LifecycleListener {
         return result[0];
     }
     
+    public void setBearing(float param) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                        .target(mapInstance.getCameraPosition().target)
+                        .zoom(mapInstance.getCameraPosition().zoom)
+                        .tilt(mapInstance.getCameraPosition().tilt)
+                        .bearing(param)
+                        .build()
+                    ));
+                }
+            });
+        }
+    }
+    
+    public float getBearing() {
+        final float[] result = new float[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getCameraPosition().bearing;
+
+                }
+            });
+        }
+        return result[0];
+    }
+     
+    public void setTilt(float param) {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mapInstance.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                        .target(mapInstance.getCameraPosition().target)
+                        .zoom(mapInstance.getCameraPosition().zoom)
+                        .tilt(param)
+                        .bearing(mapInstance.getCameraPosition().bearing)
+                        .build()
+                    ));
+                }
+            });
+        }
+    }
+    
+    public float getTilt() {
+        final float[] result = new float[1];
+        if(mapInstance != null) { 
+            AndroidImplementation.runOnUiThreadAndBlock(new Runnable() {
+                public void run() {
+                    result[0] = mapInstance.getCameraPosition().tilt;
+
+                }
+            });
+        }
+        return result[0];
+    }
+     
+    public void stopAnimation() {
+        if(mapInstance != null) { 
+            AndroidNativeUtil.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                   mapInstance.stopAnimation();
+                }
+            });
+        }
+    }
+     
+     
+     
     
     //
     //Map elements

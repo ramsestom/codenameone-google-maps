@@ -72,6 +72,7 @@ public class GoogleMapsTestApp {
         Form hi = new Form("Native Maps Test");
         hi.setLayout(new BorderLayout());
         final MapContainer cnt = new MapContainer(HTML_API_KEY);
+        cnt.disableDefaultUI();
         //final MapContainer cnt = new MapContainer();
         cnt.setCameraPosition(new Coord(-26.1486233, 28.67401229999996));//this breaks the code //because the Google map is not loaded yet
         cnt.addMapListener(new MapListener() {
@@ -91,7 +92,7 @@ public class GoogleMapsTestApp {
             ToastBar.showMessage("Received tap at "+e.getX()+", "+e.getY(), FontImage.MATERIAL_3D_ROTATION);
         });
         
-        int maxZoom = cnt.getMaxZoom();
+        int maxZoom = (int)cnt.getMaxZoom();
         System.out.println("Max zoom is "+maxZoom);
         Button btnMoveCamera = new Button("Move Camera");
         btnMoveCamera.addActionListener(e->{
@@ -159,7 +160,7 @@ public class GoogleMapsTestApp {
                 }
                 
             });
-            cnt.zoom(center, (int)zoom);
+            cnt.setCamera(center, (int)zoom);
             while (!finished[0]) {
                 Display.getInstance().invokeAndBlock(()->{
                     while (!finished[0]) {
@@ -199,7 +200,7 @@ public class GoogleMapsTestApp {
                         }
                         
                     });
-                    cnt.zoom(center, (int)zoom);
+                    cnt.setCamera(center, (int)zoom);
                     while (!done[0]) {
                         Display.getInstance().invokeAndBlock(()->{
                             while (!done[0]) {
@@ -231,7 +232,7 @@ public class GoogleMapsTestApp {
                             }
                         }
                     });
-                    cnt.zoom(center, (int)zoom);
+                    cnt.setCamera(center, (int)zoom);
                     while (!done[0]) {
                         Display.getInstance().invokeAndBlock(()->{
                             while (!done[0]) {
@@ -243,7 +244,7 @@ public class GoogleMapsTestApp {
                     
                 }
                 zoom -= 1;
-                cnt.zoom(center, (int)zoom);
+                cnt.setCamera(center, (int)zoom);
                 cnt.addTapListener(null);
             }
             

@@ -71,24 +71,21 @@ import java.util.List;
  */
 public class MapContainer extends Container {
     private boolean debug;
-    /**
-     * Map type for native maps
-     */
+  
+    public static final int MAP_TYPE_NORMAL = 0; // = ROADMAP type
+    
     public static final int MAP_TYPE_TERRAIN = 1;
 
-    /**
-     * Map type for native maps
-     */
     public static final int MAP_TYPE_HYBRID = 2;
 
-    /**
-     * Map type for native maps
-     */
+    public static final int MAP_TYPE_SATELLITE = 4;
+    
     public static final int MAP_TYPE_NONE = 3;
+    
     
     private InternalNativeMaps internalNative;
     private MapComponent internalLightweightCmp;
-    private MapComponent dummyMapComponent;
+    private MapComponent dummyMapComponent; //dummy Mapcomponent (returning transparent tiles) used on top of javascript browsercomponent 
     private BrowserComponent internalBrowser;
     private JavascriptContext browserContext;
     private ArrayList<MapListener> listeners;
@@ -128,9 +125,6 @@ public class MapContainer extends Container {
         }
         ((MapLayout)mapLayoutWrapper.getLayout()).onInit();
     }
-
-    
-    
     
     /**
      * @inheritDoc
@@ -243,7 +237,8 @@ public class MapContainer extends Container {
                 }
             };
             mapWrapper.addComponent(BorderLayout.CENTER, internalLightweightCmp);
-        } else {
+        }
+        else {
             dummyMapComponent = new MapComponent(new OpenStreetMapProvider(){
                 Image img;
 
@@ -257,8 +252,6 @@ public class MapContainer extends Container {
 
                     return new Tile(size, bbox, img);
                 }
-
-
 
             });
             internalBrowser = new BrowserComponent();
@@ -489,6 +482,48 @@ public class MapContainer extends Container {
         return internalNative != null;
     }
     
+    private int dummyType = MAP_TYPE_NONE;
+    
+    /**
+     * Sets the native map type to one of the MAP_TYPE constants
+     * @param type one of the MAP_TYPE constants
+     */
+    public void setMapType(int type) {
+        if(internalNative != null) {
+            internalNative.setMapType(type);
+        } else {
+            if (internalLightweightCmp != null) {
+                
+            } else {
+                // browser component
+                //browserBridge.waitForReady();
+                //browserBridge.bridge.call("setMapType", new Object[]{type});
+                dummyType = type;
+                browserBridge.ready(()->{
+                    internalBrowser.execute(BRIDGE+".setMapType(${0})", new Object[]{type}, jsres->{});
+                });
+                
+            }
+        }
+    }
+    
+    /**
+     * Returns the native map type
+     * @return one of the MAP_TYPE constants
+     */
+    public int getMapType() {
+        if(internalNative != null) {
+            return internalNative.getMapType();
+        } else if (browserBridge != null) {
+            //browserBridge.waitForReady();
+            //return browserBridge.bridge.callInt("getMapType");
+            return dummyType;
+            //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMapType())").getInt();
+        }       
+        return MAP_TYPE_NONE;
+    }
+    
+    
     static void fireMarkerEvent(int mapId, final long markerId) {
         final MapContainer mc = instances.get(mapId);
         if(mc != null) {
@@ -683,17 +718,6 @@ public class MapContainer extends Container {
     }
     
     /**
-     * Removes a component marker that was previously added using {@link #addMarker(com.codename1.ui.Component, com.codename1.maps.Coord) }
-     * @param marker 
-     */
-    public void removeMarker(Component marker) {
-        mapLayoutWrapper.removeComponent(marker);
-    }
-    
-    
-    
-    
-    /**
      * Adds a marker to the map with the given attributes
      * @param icon the icon, if the native maps are used this value can be null to use the default marker
      * @param location the coordinate for the marker
@@ -709,8 +733,7 @@ public class MapContainer extends Container {
                 .onClick(onClick));
         
     }
-    
-    
+        
     /**
      * Adds a marker to the map with the given attributes
      * @param opts The marker options.
@@ -823,10 +846,18 @@ public class MapContainer extends Container {
                 //System.out.println("MapKey added "+o.mapKey);
                 return o;
             }
-            
         }
-        
     }
+    
+    /**
+     * Removes a component marker that was previously added using {@link #addMarker(com.codename1.ui.Component, com.codename1.maps.Coord) }
+     * @param marker 
+     */
+    public void removeMarker(Component marker) {
+        mapLayoutWrapper.removeComponent(marker);
+    }
+        
+    
     
     /**
      * Draws a path on the map
@@ -885,42 +916,6 @@ public class MapContainer extends Container {
     }
     
     /**
-     * Returns the max zoom level of the map
-     *
-     * @return max zoom level
-     */
-    public float getMaxZoom() {
-        if(internalNative == null) {
-            if(internalLightweightCmp != null) {
-                return internalLightweightCmp.getMaxZoomLevel();
-            } else {
-                return dummyMapComponent.getMaxZoomLevel();
-                //return browserBridge.bridge.callInt("getMaxZoom");
-                //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMaxZoom())").getInt();
-            }
-        }
-        return internalNative.getMaxZoom();
-    }
-    
-    /**
-     * Returns the min zoom level of the map
-     *
-     * @return min zoom level
-     */
-    public float getMinZoom() {
-        if(internalNative == null) {
-            if(internalLightweightCmp != null) {
-                return internalLightweightCmp.getMinZoomLevel();
-            } else {
-                //browserBridge.waitForReady();
-                return dummyMapComponent.getMinZoomLevel();
-                //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMinZoom())").getInt();
-            }
-        }
-        return internalNative.getMinZoom();
-    }
-    
-    /**
      * Removes the map object from the map
      * @param obj the map object to remove
      */
@@ -973,11 +968,7 @@ public class MapContainer extends Container {
 
                         });
                     });
-                    
-                    
                 }
-                
-                
             }
         }
     }
@@ -1006,31 +997,157 @@ public class MapContainer extends Container {
         }
     }
     
+    
+    
+    /**
+     * Position the map camera
+     * @param crd the coordinate
+     */
+    public void setCameraPosition(Coord crd) {
+        if(internalNative == null) {
+            if(internalLightweightCmp != null) {
+                internalLightweightCmp.zoomTo(crd, internalLightweightCmp.getZoomLevel());
+            } else {
+                //browserBridge.waitForReady();
+                //browserBridge.bridge.call(
+                //        "setCameraPosition", 
+                //        new Object[]{crd.getLatitude(), crd.getLongitude()}
+                //);
+                dummyMapComponent.zoomTo(crd, (int)getZoom());
+                browserBridge.ready(()->{
+                    internalBrowser.execute(BRIDGE+".setCameraPosition(${0}, ${1})", new Object[]{crd.getLatitude(), crd.getLongitude()});
+                });
+            }
+            return;
+        }
+        internalNative.setPosition(crd.getLatitude(), crd.getLongitude());
+    }
+    
+    /**
+     * Returns the position in the center of the camera
+     * @return the position
+     */
+    public Coord getCameraPosition() {
+        if(internalNative == null) {
+            if(internalLightweightCmp != null) {
+                return internalLightweightCmp.getCenter();
+            } else {
+                //browserBridge.waitForReady();
+                //String pos = browserBridge.bridge.callString("getCameraPosition");
+                return dummyMapComponent.getCenter();
+                /*
+                String pos = internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getCameraPosition())").toString();
+                try {
+                    String latStr = pos.substring(0, pos.indexOf(" "));
+                    String lnStr = pos.substring(pos.indexOf(" ")+1);
+                    return new Coord(Double.parseDouble(latStr), Double.parseDouble(lnStr));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    return new Coord(0, 0);
+                }
+                */
+            }
+        }
+        return new Coord(internalNative.getLatitude(), internalNative.getLongitude());
+    }
+    
+    /**
+     * Zoom to the given level
+     * @param zoom the zoom level
+     */
+    public void setZoom(float zoom) {
+        if(internalNative != null) {
+            internalNative.setZoom(zoom);
+        } else {
+            if(internalLightweightCmp != null) {
+                internalLightweightCmp.setZoomLevel(Math.round(zoom));
+            } else {
+                //browserBridge.waitForReady();
+                //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
+                dummyMapComponent.setZoomLevel(Math.round(zoom));
+                browserBridge.ready(()->{
+                    internalBrowser.execute(BRIDGE+".setZoom(${0})", new Object[]{zoom});
+                });
+            }
+        }
+    }
+    
+    /**
+     * Returns the current zoom level
+     * @return the current zoom level between min/max zoom
+     */
+    public float getZoom() {
+        if(internalNative != null) {
+            return internalNative.getZoom();
+        } else {
+            if(internalLightweightCmp != null) {
+                return internalLightweightCmp.getZoomLevel();
+            }
+            //browserBridge.waitForReady();
+            //return browserBridge.bridge.callInt("getZoom");
+            return dummyMapComponent.getZoomLevel();
+            //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getZoom())").getInt();
+            
+        }        
+    }
+    
+     /**
+     * Returns the max zoom level of the map
+     *
+     * @return max zoom level
+     */
+    public float getMaxZoom() {
+        if(internalNative == null) {
+            if(internalLightweightCmp != null) {
+                return internalLightweightCmp.getMaxZoomLevel();
+            } else {
+                return dummyMapComponent.getMaxZoomLevel();
+                //return browserBridge.bridge.callInt("getMaxZoom");
+                //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMaxZoom())").getInt();
+            }
+        }
+        return internalNative.getMaxZoom();
+    }
+    
+    /**
+     * Returns the min zoom level of the map
+     *
+     * @return min zoom level
+     */
+    public float getMinZoom() {
+        if(internalNative == null) {
+            if(internalLightweightCmp != null) {
+                return internalLightweightCmp.getMinZoomLevel();
+            } else {
+                //browserBridge.waitForReady();
+                return dummyMapComponent.getMinZoomLevel();
+                //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMinZoom())").getInt();
+            }
+        }
+        return internalNative.getMinZoom();
+    }
+    
     /**
      * Zoom to the given coordinate on the map
      * @param crd the coordinate
      * @param zoom the zoom level
      */
-    public void zoom(Coord crd, int zoom) {
+    public void setCamera(Coord crd, float zoom) {
         if(internalNative != null) {
             internalNative.setCamera(crd.getLatitude(), crd.getLongitude(), zoom);
         } else {
             if(internalLightweightCmp != null) {
-                internalLightweightCmp.zoomTo(crd, (int)zoom);
+                internalLightweightCmp.zoomTo(crd, Math.round(zoom));
             } else {
                 //browserBridge.waitForReady();
                 //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
-                dummyMapComponent.zoomTo(crd, zoom);
+                dummyMapComponent.zoomTo(crd, Math.round(zoom));
                 browserBridge.ready(()->{
-                    internalBrowser.execute(BRIDGE+".zoom(${0}, ${1}, ${2})", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
+                    internalBrowser.execute(BRIDGE+".setZoom(${0}, ${1}, ${2})", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
                 });
-                
-                
             }
         }
     }
-    
-    
     
     /**
      * Pans and zooms to fit the given bounding box.
@@ -1098,7 +1215,7 @@ public class MapContainer extends Container {
         //Log.p("Finished zooming out");
         //Log.p("After: latDiff="+latDiff+", lngDiff="+lngDiff+", zoom="+Math.floor(zoom));
         
-        zoom(c, (int)Math.floor(zoom));
+        setCamera(c, (int)Math.floor(zoom));
         //setCameraPosition(c);
         //Log.p("Setting center to "+c);
         //Log.p("In order to fit bounds "+bounds);
@@ -1119,28 +1236,9 @@ public class MapContainer extends Container {
 
         }, 1000);
         */
-        
     }
     
     
-    /**
-     * Returns the current zoom level
-     * @return the current zoom level between min/max zoom
-     */
-    public float getZoom() {
-        if(internalNative != null) {
-            return internalNative.getZoom();
-        } else {
-            if(internalLightweightCmp != null) {
-                return internalLightweightCmp.getZoomLevel();
-            }
-            //browserBridge.waitForReady();
-            //return browserBridge.bridge.callInt("getZoom");
-            return dummyMapComponent.getZoomLevel();
-            //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getZoom())").getInt();
-            
-        }        
-    }
 
     public BoundingBox getBoundingBox() {
         Coord sw = this.getCoordAtPosition(0, getHeight());
@@ -1149,104 +1247,64 @@ public class MapContainer extends Container {
         
     }
     
-    private int dummyType = MAP_TYPE_NONE;
     
-    /**
-     * Sets the native map type to one of the MAP_TYPE constants
-     * @param type one of the MAP_TYPE constants
+    
+     /**
+     * Show my location is a feature of the native maps only that allows marking
+     * a users location on the map with a circle
+     * @return the showMyLocation
      */
-    public void setMapType(int type) {
-        if(internalNative != null) {
-            internalNative.setMapType(type);
-        } else {
-            if (internalLightweightCmp != null) {
-                
-            } else {
-                // browser component
-                //browserBridge.waitForReady();
-                //browserBridge.bridge.call("setMapType", new Object[]{type});
-                dummyType = type;
-                browserBridge.ready(()->{
-                    internalBrowser.execute(BRIDGE+".setMapType(${0})", new Object[]{type}, jsres->{});
-                });
-                
-            }
-        }
+    public boolean isShowMyLocation() {
+        return showMyLocation;
     }
-    
-    /**
-     * Returns the native map type
-     * @return one of the MAP_TYPE constants
-     */
-    public int getMapType() {
-        if(internalNative != null) {
-            return internalNative.getMapType();
-        } else if (browserBridge != null) {
-            //browserBridge.waitForReady();
-            //return browserBridge.bridge.callInt("getMapType");
-            return dummyType;
-            //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMapType())").getInt();
-        }       
-        return MAP_TYPE_NONE;
-    }
-    
-    
-    
-    /**
-     * Position the map camera
-     * @param crd the coordinate
-     */
-    public void setCameraPosition(Coord crd) {
-        if(internalNative == null) {
-            if(internalLightweightCmp != null) {
-                internalLightweightCmp.zoomTo(crd, internalLightweightCmp.getZoomLevel());
-            } else {
-                //browserBridge.waitForReady();
-                //browserBridge.bridge.call(
-                //        "setCameraPosition", 
-                //        new Object[]{crd.getLatitude(), crd.getLongitude()}
-                //);
-                dummyMapComponent.zoomTo(crd, (int)getZoom());
-                browserBridge.ready(()->{
-                    internalBrowser.execute(BRIDGE+".setCameraPosition(${0}, ${1})", new Object[]{crd.getLatitude(), crd.getLongitude()});
-                });
-                
-                  
-            }
-            return;
-        }
-        internalNative.setPosition(crd.getLatitude(), crd.getLongitude());
-    }
-    
-    /**
-     * Returns the position in the center of the camera
-     * @return the position
-     */
-    public Coord getCameraPosition() {
-        if(internalNative == null) {
-            if(internalLightweightCmp != null) {
-                return internalLightweightCmp.getCenter();
-            } else {
-                //browserBridge.waitForReady();
-                //String pos = browserBridge.bridge.callString("getCameraPosition");
-                return dummyMapComponent.getCenter();
-                /*
-                String pos = internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getCameraPosition())").toString();
-                try {
-                    String latStr = pos.substring(0, pos.indexOf(" "));
-                    String lnStr = pos.substring(pos.indexOf(" ")+1);
-                    return new Coord(Double.parseDouble(latStr), Double.parseDouble(lnStr));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    return new Coord(0, 0);
-                }
-                */
-                
-            }
 
+    /**
+     * Show my location is a feature of the native maps only that allows marking
+     * a users location on the map with a circle
+     * @param showMyLocation the showMyLocation to set
+     */
+    public void setShowMyLocation(boolean showMyLocation) {
+        this.showMyLocation = showMyLocation;
+        if(isNativeMaps()) {
+            internalNative.setMyLocationEnabled(showMyLocation);
         }
-        return new Coord(internalNative.getLatitude(), internalNative.getLongitude());
     }
+    
+    
+    public void disableDefaultUI(){
+        if(internalNative != null) {
+            internalNative.disableDefaultUI();
+        } else {
+            if(internalLightweightCmp != null) {
+                //nothing to do
+            } else {
+                browserBridge.ready(()->{
+                    //internalBrowser.execute(BRIDGE+".disableDefaultUI()");
+                    internalBrowser.execute("callback.onSuccess("+BRIDGE+".disableDefaultUI(true))", jsres->{});
+                });
+            }
+        }
+    }
+    
+
+    /**
+     * @return the rotateGestureEnabled
+     */
+    public boolean isRotateGestureEnabled() {
+        return rotateGestureEnabled;
+    }
+
+    /**
+     * @param rotateGestureEnabled the rotateGestureEnabled to set
+     */
+    public final void setRotateGestureEnabled(boolean rotateGestureEnabled) {
+        this.rotateGestureEnabled = rotateGestureEnabled;
+        if(isNativeMaps()) {
+            internalNative.setRotateGesturesEnabled(rotateGestureEnabled);
+        }
+    }
+    
+    
     
     /**
      * Returns the lat/lon coordinate at the given x/y position
@@ -1515,43 +1573,7 @@ public class MapContainer extends Container {
         listeners.remove(listener);
     }
 
-    /**
-     * Show my location is a feature of the native maps only that allows marking
-     * a users location on the map with a circle
-     * @return the showMyLocation
-     */
-    public boolean isShowMyLocation() {
-        return showMyLocation;
-    }
-
-    /**
-     * Show my location is a feature of the native maps only that allows marking
-     * a users location on the map with a circle
-     * @param showMyLocation the showMyLocation to set
-     */
-    public void setShowMyLocation(boolean showMyLocation) {
-        this.showMyLocation = showMyLocation;
-        if(isNativeMaps()) {
-            internalNative.setMyLocationEnabled(showMyLocation);
-        }
-    }
-
-    /**
-     * @return the rotateGestureEnabled
-     */
-    public boolean isRotateGestureEnabled() {
-        return rotateGestureEnabled;
-    }
-
-    /**
-     * @param rotateGestureEnabled the rotateGestureEnabled to set
-     */
-    public final void setRotateGestureEnabled(boolean rotateGestureEnabled) {
-        this.rotateGestureEnabled = rotateGestureEnabled;
-        if(isNativeMaps()) {
-            internalNative.setRotateGesturesEnabled(rotateGestureEnabled);
-        }
-    }
+   
     
     /**
      * Object on the map

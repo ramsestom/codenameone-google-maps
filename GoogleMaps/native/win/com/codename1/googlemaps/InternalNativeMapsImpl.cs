@@ -124,6 +124,9 @@ public class InternalNativeMapsImpl : IInternalNativeMapsImpl {
         return false;
     }
 
+    public void disableDefaultUI() {
+    }
+
 
     public void setRotateGesturesEnabled(bool param) {
     }
@@ -270,6 +273,23 @@ public class InternalNativeMapsImpl : IInternalNativeMapsImpl {
                res = (float)mapControl.MinZoomLevel;
             }).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
             return res;
+    }
+
+    public void setBearing(float param) {
+    }
+
+    public float getBearing() {
+        return 0;
+    }
+
+    public void setTilt(float param) {
+    }
+    
+    public float getTilt() {
+        return 0;
+    }
+
+    public void stopAnimation() {
     }
 
 

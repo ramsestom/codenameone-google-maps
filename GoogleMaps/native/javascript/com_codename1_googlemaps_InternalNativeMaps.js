@@ -1,19 +1,16 @@
 (function(exports){
 
-    /**
-     * Map type for native maps
-     */
+    var MAP_TYPE_ROADMAP = 0;
+            
     var MAP_TYPE_TERRAIN = 1;
 
-    /**
-     * Map type for native maps
-     */
     var MAP_TYPE_HYBRID = 2;
 
-    /**
-     * Map type for native maps
-     */
+    var MAP_TYPE_SATELLITE = 4;
+            
     var MAP_TYPE_NONE = 3;
+    
+    
     
     var uniqueIdCounter = 0;
     
@@ -218,6 +215,8 @@ var o = {};
                     this.map.setMapTypeId(google.maps.MapTypeId.HYBRID); break;
                 case MAP_TYPE_TERRAIN :
                     this.map.setMapTypeId(google.maps.MapTypeId.TERRAIN); break;
+                case MAP_TYPE_SATELLITE :
+                    this.map.setMapTypeId(google.maps.MapTypeId.SATELLITE); break;
                 default :
                     this.map.setMapTypeId(google.maps.MapTypeId.ROADMAP); break;
             }
@@ -232,11 +231,11 @@ var o = {};
                 case google.maps.MapTypeId.HYBRID :
                     type = MAP_TYPE_HYBRID; break;
                 case google.maps.MapTypeId.TERRAIN :
-                case google.maps.MapTypeId.SATELLITE:
                     type = MAP_TYPE_TERRAIN; break;
+                case google.maps.MapTypeId.SATELLITE:
+                    type = MAP_TYPE_SATELLITE; break;
                 default :
-                    type = MAP_TYPE_NONE;
-                    
+                    type = MAP_TYPE_ROADMAP;
             }
             callback.complete(type);
         });
@@ -379,6 +378,14 @@ var o = {};
             callback.complete(this.map.get('zoomControl') == true);
         });
     };
+    
+    o.disableDefaultUI_ = function(callback) {
+        ready(this, function() {
+            this.map.setOptions({disableDefaultUI: true});
+            callback.complete();
+        });
+    };
+    
     
     
     o.setRotateGesturesEnabled__boolean = function(param1, callback) {
@@ -554,6 +561,39 @@ var o = {};
                 mzoom = this.map.mapTypes.get(this.map.getMapTypeId()).minZoom;
             }
             callback.complete(mzoom);
+        });
+    };
+    
+    o.setBearing__float = function(param1, callback) {
+        ready(this, function() {
+            this.map.setHeading(param1);
+            callback.complete();
+        });
+    };
+    
+    o.getBearing_ = function(callback) {
+         ready(this, function() {
+            callback.complete(this.map.getHeading());
+        });
+    };
+    
+    o.setTilt__float = function(param1, callback) {
+        ready(this, function() {
+            this.map.setTilt(param1);
+            callback.complete();
+        });
+    };
+    
+    o.getTilt_ = function(callback) {
+        ready(this, function() {
+            callback.complete(this.map.getTilt());
+        });
+    };
+    
+    o.stopAnimation_ = function(callback) {
+         ready(this, function() {
+            console.log("animations not implemented yet in Javascript");
+            callback.complete();
         });
     };
     

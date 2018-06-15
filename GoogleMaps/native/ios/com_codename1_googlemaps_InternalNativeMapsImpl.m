@@ -53,11 +53,20 @@ extern float scaleValue;
 -(void)setMapType:(int)param{
     dispatch_async(dispatch_get_main_queue(), ^{
         switch(param) {
+            case 0:
+                mapView.mapType = kGMSTypeNormal ;
+                return;
             case 1:
-                mapView.mapType = kGMSTypeSatellite;
+                mapView.mapType = kGMSTypeTerrain;
                 return;
             case 2:
                 mapView.mapType = kGMSTypeHybrid;
+                return;
+            case 3:
+                mapView.mapType = kGMSTypeNone;
+                return;
+            case 4:
+                mapView.mapType = kGMSTypeSatellite;
                 return;
         }
         mapView.mapType = kGMSTypeNormal;
@@ -67,7 +76,7 @@ extern float scaleValue;
 -(int)getMapType{
     GMSMapViewType t = mapView.mapType;
     if(t == kGMSTypeSatellite) {
-        return 1;
+        return 4;
     }
     if(t == kGMSTypeHybrid) {
         return 2;
@@ -75,7 +84,10 @@ extern float scaleValue;
     if(t == kGMSTypeTerrain) {
         return 1;
     }
-    return 3;
+    if(t == kGMSTypeNone) {
+        return 3;
+    }
+    return 0;
 }
 
 -(void)setPadding:(int)param param1:(int)param1 param2:(int)param2 param3:(int)param3{
@@ -248,6 +260,17 @@ extern float scaleValue;
 -(BOOL)isZoomControlsEnabled{
     return NO;
 }
+
+-(void)disableDefaultUI{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if(mapView != nil) {
+            mapView.settings.compassButton = NO;
+            mapView.settings.myLocationButton = NO;
+            mapView.settings.indoorPicker = NO;
+        } 
+    });
+}
+
 
 
 -(void)setRotateGesturesEnabled:(BOOL)param{
@@ -496,6 +519,59 @@ extern float scaleValue;
     return zoom;
 }
 
+-(void)setBearing:(float)param{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if(mapView != nil) {
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            GMSCameraPosition *camera = [GMSCameraPosition cameraWithTarget:mapView.camera.target
+                                                           zoom:mapView.camera.zoom
+                                                           bearing:param	
+                                                           viewingAngle:mapView.camera.viewingAngle];
+            [mapView  animateToCameraPosition:camera];
+            [mapView retain];
+            [pool release];
+        }
+    });
+}
+
+-(float)getBearing{
+    __block float bearing = 0;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        if(mapView != nil) {
+            bearing = mapView.camera.bearing;
+        }
+    });
+    return bearing;
+}
+
+-(void)setTilt:(float)param{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if(mapView != nil) {
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            GMSCameraPosition *camera = [GMSCameraPosition cameraWithTarget:mapView.camera.target
+                                                           zoom:mapView.camera.zoom
+                                                           bearing:mapView.camera.bearing	
+                                                           viewingAngle:param];
+            [mapView  animateToCameraPosition:camera];
+            [mapView retain];
+            [pool release];
+        }
+    });
+}
+
+-(float)getTilt{
+    __block float tilt = 0;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        if(mapView != nil) {
+            tilt = mapView.camera.viewingAngle;
+        }
+    });
+    return tilt;
+}
+
+-(void)stopAnimation{
+    //Not implemented on iOS yet
+}
 
 
 
