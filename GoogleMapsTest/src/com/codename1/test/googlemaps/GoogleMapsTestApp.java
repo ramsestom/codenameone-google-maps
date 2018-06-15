@@ -73,6 +73,7 @@ public class GoogleMapsTestApp {
         hi.setLayout(new BorderLayout());
         final MapContainer cnt = new MapContainer(HTML_API_KEY);
         cnt.disableDefaultUI();
+        cnt.disableAllGestures();
         //final MapContainer cnt = new MapContainer();
         cnt.setCameraPosition(new Coord(-26.1486233, 28.67401229999996));//this breaks the code //because the Google map is not loaded yet
         cnt.addMapListener(new MapListener() {

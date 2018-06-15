@@ -179,7 +179,7 @@
                 
                 setAllGesturesEnabled: function(enabled){
                     this.ready(function() {
-                       this.map.setOptions({gestureHandling: enabled});  
+                       this.map.setOptions({gestureHandling: enabled?'auto':'none'});  
                     });
                 },
                 

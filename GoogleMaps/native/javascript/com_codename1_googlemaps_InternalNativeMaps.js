@@ -444,7 +444,7 @@ var o = {};
     
     o.setAllGesturesEnabled__boolean = function(param1, callback) {
         ready(this, function() {
-            this.map.setOptions({gestureHandling: param1});
+            this.map.setOptions({gestureHandling: param1?'auto':'none'});
             callback.complete();
         });
     };

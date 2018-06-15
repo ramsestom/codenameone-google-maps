@@ -1279,7 +1279,6 @@ public class MapContainer extends Container {
                 //nothing to do
             } else {
                 browserBridge.ready(()->{
-                    //internalBrowser.execute(BRIDGE+".disableDefaultUI()");
                     internalBrowser.execute("callback.onSuccess("+BRIDGE+".disableDefaultUI(true))", jsres->{});
                 });
             }
@@ -1304,6 +1303,21 @@ public class MapContainer extends Container {
         }
     }
     
+    
+    public void disableAllGestures() {
+        if(internalNative != null) {
+            internalNative.setAllGesturesEnabled(false);
+        } else {
+            if(internalLightweightCmp != null) {
+                internalLightweightCmp.setEnabled(false); //TODO: check how to disable a CN1 component
+            } else {
+                dummyMapComponent.setEnabled(false); //TODO: check how to disable a CN1 component
+                browserBridge.ready(()->{
+                    internalBrowser.execute("callback.onSuccess("+BRIDGE+".setAllGesturesEnabled(false))", jsres->{});
+                });
+            }
+        }
+    }
     
     
     /**
