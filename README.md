@@ -36,6 +36,6 @@ For UWP, you'll need to define the `windows.bingmaps.token` display property ins
 Display.getInstance().setProperty("windows.bingmaps.token", "xxxxxxxxx");
 ```
 
-NOTE: Version 23 and higher require google play services 9.4.0 or higher, this library will automatically cause your app to build against 9.4.0 or higher.  If you require compatibility with the older version (8.3.0), you'll need to install GoogleMaps.cn1lib v22 or earlier.  You can download v22 [here](https://github.com/codenameone/codenameone-google-maps/releases/tag/v22).
+NOTE: Version 23 and higher require google play services 9.6.0 or higher, this library will automatically cause your app to build against 9.4.0 or higher.  If you require compatibility with the older version (8.3.0), you'll need to install GoogleMaps.cn1lib v22 or earlier.  You can download v22 [here](https://github.com/codenameone/codenameone-google-maps/releases/tag/v22).
 
 This project was migrated from an old project on Google code http://code.google.com/p/codenameone-google-maps

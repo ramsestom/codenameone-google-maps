@@ -35,6 +35,7 @@ import com.codename1.maps.layers.LinesLayer;
 import com.codename1.maps.layers.PointLayer;
 import com.codename1.maps.layers.PointsLayer;
 import com.codename1.ui.Container;
+import com.codename1.maps.providers.GoogleMapsProvider;
 import com.codename1.maps.providers.MapProvider;
 import com.codename1.maps.providers.OpenStreetMapProvider;
 import com.codename1.system.NativeLookup;
@@ -74,13 +75,13 @@ public class MapContainer extends Container {
   
     public static final int MAP_TYPE_NORMAL = 0; // = ROADMAP type
     
-    public static final int MAP_TYPE_TERRAIN = 1;
-
+    public static final int MAP_TYPE_SATELLITE = 1;
+    
     public static final int MAP_TYPE_HYBRID = 2;
 
-    public static final int MAP_TYPE_SATELLITE = 4;
+    public static final int MAP_TYPE_TERRAIN = 3;
     
-    public static final int MAP_TYPE_NONE = 3;
+    public static final int MAP_TYPE_NONE = 4;
     
     
     private InternalNativeMaps internalNative;
@@ -482,7 +483,7 @@ public class MapContainer extends Container {
         return internalNative != null;
     }
     
-    private int dummyType = MAP_TYPE_NONE;
+    private int dummyType = MAP_TYPE_NORMAL;
     
     /**
      * Sets the native map type to one of the MAP_TYPE constants
@@ -493,7 +494,9 @@ public class MapContainer extends Container {
             internalNative.setMapType(type);
         } else {
             if (internalLightweightCmp != null) {
-                
+            	if (internalLightweightCmp.getProvider() instanceof GoogleMapsProvider) {
+            		((GoogleMapsProvider)internalLightweightCmp.getProvider()).setMapType(type); //TODO: unify GoogleMapsProvider and MapContainer map type constants... 
+            	}
             } else {
                 // browser component
                 //browserBridge.waitForReady();
@@ -514,14 +517,47 @@ public class MapContainer extends Container {
     public int getMapType() {
         if(internalNative != null) {
             return internalNative.getMapType();
-        } else if (browserBridge != null) {
-            //browserBridge.waitForReady();
-            //return browserBridge.bridge.callInt("getMapType");
-            return dummyType;
-            //return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMapType())").getInt();
-        }       
-        return MAP_TYPE_NONE;
+        } 
+        else {
+        	if (internalLightweightCmp != null) {
+            	if (internalLightweightCmp.getProvider() instanceof GoogleMapsProvider) {
+            		return ((GoogleMapsProvider)internalLightweightCmp.getProvider()).getMapType(); //TODO: unify GoogleMapsProvider and MapContainer map type constants... 
+            	}
+        	}
+        	else { //if (browserBridge != null) {
+        		//browserBridge.waitForReady();
+        		//return browserBridge.bridge.callInt("getMapType");
+        		return dummyType;
+        		//return internalBrowser.executeAndWait("callback.onSuccess("+BRIDGE+".getMapType())").getInt();
+        	}     
+        }
+        return MAP_TYPE_NORMAL;
     }
+    
+    
+    /**
+     * Sets the native map style 
+     * @param json the json google map style object
+     */
+    public void setMapStyle(String json) {
+    	 if(internalNative != null) {
+             internalNative.setMapStyle(json);
+         } else {
+             if (internalLightweightCmp != null) {
+            	 if (internalLightweightCmp.getProvider() instanceof GoogleMapsProvider) {
+             		((GoogleMapsProvider)internalLightweightCmp.getProvider()).setMapStyle(json); 
+             	}
+             } else {
+                 browserBridge.ready(()->{
+                     internalBrowser.execute(BRIDGE+".setMapStyle("+json+")", jsres->{});
+                 });
+                 
+             }
+         }
+    }
+    
+    
+    
     
     
     static void fireMarkerEvent(int mapId, final long markerId) {
@@ -857,6 +893,19 @@ public class MapContainer extends Container {
         mapLayoutWrapper.removeComponent(marker);
     }
         
+    /**
+     * Update the location of a marker previously added to the map
+     * @param marker
+     * @param location 
+     */
+    public void updateMarkerLocation(Component marker, Coord location) {
+        if (marker.getParent() != mapLayoutWrapper){
+            addMarker(marker, location);
+        }
+        else {
+            mapLayoutWrapper.getLayout().addLayoutComponent(location, marker, mapLayoutWrapper);
+        }
+    }
     
     
     /**
@@ -1093,6 +1142,30 @@ public class MapContainer extends Container {
         }        
     }
     
+    
+    /**
+     * set the maximum zoom level
+     * @param zoom the zoom level
+     */
+    public void setMaxZoom(float zoom) {
+        if(internalNative != null) {
+            internalNative.setMaxZoom(zoom);
+        } else {
+            //javascript or lightweighted map components do not support float zoom values. So convert it to int
+            int izoom = Math.round(zoom);
+            if(internalLightweightCmp != null) {
+                internalLightweightCmp.setMaxZoomLevel(izoom);
+            } else {
+                //browserBridge.waitForReady();
+                //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
+                dummyMapComponent.setMaxZoomLevel(izoom);
+                browserBridge.ready(()->{
+                    internalBrowser.execute(BRIDGE+".setMaxZoom(${0})", new Object[]{izoom});
+                });
+            }
+        }
+    }
+    
      /**
      * Returns the max zoom level of the map
      *
@@ -1110,6 +1183,32 @@ public class MapContainer extends Container {
         }
         return internalNative.getMaxZoom();
     }
+    
+    
+    
+    /**
+     * set the maximum zoom level
+     * @param zoom the zoom level
+     */
+    public void setMinZoom(float zoom) {
+        if(internalNative != null) {
+            internalNative.setMinZoom(zoom);
+        } else {
+            //javascript or lightweighted map components do not support float zoom values. So convert it to int
+            int izoom = Math.round(zoom);
+            if(internalLightweightCmp != null) {
+                internalLightweightCmp.setMinZoomLevel(izoom);
+            } else {
+                //browserBridge.waitForReady();
+                //browserBridge.bridge.call("zoom", new Object[]{ crd.getLatitude(), crd.getLongitude(), zoom});
+                dummyMapComponent.setMinZoomLevel(izoom);
+                browserBridge.ready(()->{
+                    internalBrowser.execute(BRIDGE+".setMinZoom(${0})", new Object[]{izoom});
+                });
+            }
+        }
+    }
+    
     
     /**
      * Returns the min zoom level of the map
@@ -1155,7 +1254,7 @@ public class MapContainer extends Container {
      * Pans and zooms to fit the given bounding box.
      * @param bounds The bounding box to display.
      */
-    public void fitBounds(BoundingBox bounds) {
+    public void fitBounds_old(BoundingBox bounds) {
         Coord c = new Coord(
                 (bounds.getNorthEast().getLatitude() + bounds.getSouthWest().getLatitude())/2,
                 (bounds.getNorthEast().getLongitude() + bounds.getSouthWest().getLongitude())/2
@@ -1240,6 +1339,40 @@ public class MapContainer extends Container {
         */
     }
     
+    /**
+    * Pans and zooms to fit the given bounding box.
+    * Remarq: this is constarint by the min and max map zoom level parameters. So the fit might only be partial if the min zoom parameter is too high to fit the whole desired boundingbox
+    * @param bounds The bounding box to display.
+    */
+    public void fitBounds(BoundingBox bounds) {
+        Coord c = new Coord(
+                (bounds.getNorthEast().getLatitude() + bounds.getSouthWest().getLatitude())/2,
+                (bounds.getNorthEast().getLongitude() + bounds.getSouthWest().getLongitude())/2
+        );
+        float zoom = getZoomLevelToFit(bounds);
+        zoom = Math.max(zoom, getMinZoom());
+        zoom = Math.min(zoom, getMaxZoom());
+        setCamera(c, (int)zoom);
+    }
+    
+    
+    public float getZoomLevelToFit(BoundingBox bounds) 
+	{
+    	float z = 0;
+    	
+    	double currZoom = getZoom();
+	    BoundingBox currBbox = getBoundingBox();
+	    
+	    double curr_lat = (currBbox.getNorthEast().getLatitude() + currBbox.getSouthWest().getLatitude())/2;
+	    double target_lat = (bounds.getNorthEast().getLatitude() + bounds.getSouthWest().getLatitude())/2;
+	    
+	    double lat_zoom = currZoom - MathUtil.log(Math.abs(bounds.latitudeDifference())/Math.abs(currBbox.latitudeDifference()))/MathUtil.log(2);
+	    double lng_zoom = currZoom - MathUtil.log((Math.cos(target_lat* Math.PI/180)*Math.abs(bounds.longitudeDifference()))/(Math.cos(curr_lat*Math.PI/180)*Math.abs(currBbox.longitudeDifference())))/MathUtil.log(2);
+	    
+	    z = (float) Math.min(lat_zoom, lng_zoom);
+	
+		return z;
+	}
     
 
     public BoundingBox getBoundingBox() {
