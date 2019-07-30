@@ -302,6 +302,25 @@ public class InternalNativeMapsImpl : IInternalNativeMapsImpl {
         return 0;
     }
 
+    public void setPathColor(int color){
+    }
+    
+    public void restorePathDefaultColor(){
+    }
+    
+    public void setPathThickness(int thickness){
+    }
+    
+    public void restorePathDefaultThickness(){
+    }
+    
+    public void setPathGeodesic(bool geodesic){
+    }
+    
+    public void restorePathDefaultGeodesic(){
+    }
+
+
     public long beginPath() {
         return 0;
     }

@@ -192,6 +192,21 @@ public interface InternalNativeMaps extends NativeInterface {
     
     public long addMarker(byte[] icon, double lat, double lon, String text, String longText, boolean callback, float anchorU, float anchorV);
     
+    /** The ARGB color to be used for next paths*/
+    public void setPathColor(int color);
+    
+    public void restorePathDefaultColor();
+    
+    /** The thickness to be used for next paths. Warning: some platforms like android an js express this thickness in pixels whereas others like ios use screen points */ 
+    public void setPathThickness(int thickness);
+    
+    public void restorePathDefaultThickness();
+    
+    /** whether next paths should be drawn as geodesic lines or not.*/
+    public void setPathGeodesic(boolean geodesic);  
+    
+    public void restorePathDefaultGeodesic();
+    
     public long beginPath();
     
     public void addToPath(long pathId, double lat, double lon);

@@ -362,6 +362,27 @@
                     return key;
                 },
                 
+                
+                setPathColor: function(argb){
+                  if (argb == null ) {
+                      this.pathColor = undefined;
+                      this.pathOpacity = undefined;
+                  }  
+                  else {
+                      var a = ((argb >> 24) & 0xFF);
+                      this.pathColor = '#'+ ('000000' + (argb & 0xFFFFFF).toString(16)).slice(-6); 
+                      this.pathOpacity = a/255.0;
+                  }  
+                },
+                
+                setPathThickness: function(thickness){
+                    this.pathThickness = thickness;
+                },
+                
+                setPathGeodesic: function(geodesic){
+                   this.pathGeodesic = geodesic; 
+                },
+                
                 addPathAsJSON: function(coordsJSON){
                     var out = 0;
                     var id = uniqueIdCounter++;
@@ -375,8 +396,13 @@
                         coords.forEach(function(coord) {
                             path.push(new google.maps.LatLng(coord.lat, coord.lon));
                         });
-
-                        this.paths[id] = new google.maps.Polyline({path: path});
+                        this.paths[id] = new google.maps.Polyline({
+                            path: path,
+                            geodesic: this.pathGeodesic,
+                            strokeColor: this.pathColor,
+                            strokeOpacity: this.pathOpacity,
+                            strokeWeight: this.pathThickness
+                        });
                         this.paths[id].setMap(this.map);
                         out = id;
                     });

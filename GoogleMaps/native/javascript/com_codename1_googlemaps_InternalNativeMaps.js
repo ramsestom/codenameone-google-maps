@@ -646,9 +646,54 @@ var o = {};
         });
     };
     
+    o.setPathColor__int = function(argb, callback) {
+        var a = ((argb >> 24) & 0xFF);
+//      var r = ((argb >> 16) & 0xFF).toString(16);
+//      var g = ((argb >> 8) & 0xFF).toString(16);
+//      var b = (argb & 0xFF).toString(16);
+//      r = ('0' + r).slice(-2);
+//      g = ('0' + g).slice(-2);
+//      b = ('0' + b).slice(-2);
+        this.pathColor = '#'+ ('000000' + (argb & 0xFFFFFF).toString(16)).slice(-6); //"#" + r + g + b;
+        this.pathOpacity = a/255.0;
+        callback.complete(null);
+    };
+    
+    o.restorePathDefaultColor_ = function(callback) {
+        this.pathColor = undefined;
+        this.pathOpacity = undefined;
+        callback.complete(null);
+    };
+    
+    o.setPathThickness__int = function(thickness, callback) {
+        this.pathThickness = thickness;
+        callback.complete(null);
+    };
+    
+    o.restorePathDefaultThickness_ = function(callback) {
+        this.pathThickness = undefined;
+        callback.complete(null);
+    };
+
+    o.setPathGeodesic__boolean = function(geodesic, callback) {
+        this.pathGeodesic = geodesic;
+        callback.complete(null);
+    };
+
+    o.restorePathDefaultGeodesic_ = function(callback) {
+        this.pathGeodesic = undefined;
+        callback.complete(null);
+    };
+    
     o.beginPath_ = function(callback) {
         ready(this, function() {
-            this.currentPath = {path : []};//new google.maps.PolylineOptions();
+            this.currentPath = {
+                path : [],
+                geodesic: this.pathGeodesic,
+                strokeColor: this.pathColor,
+                strokeOpacity: this.pathOpacity,
+                strokeWeight: this.pathThickness
+            };//new google.maps.PolylineOptions();
             callback.complete(1);
         });
     };

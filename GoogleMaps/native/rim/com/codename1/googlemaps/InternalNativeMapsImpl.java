@@ -3,7 +3,25 @@ package com.codename1.googlemaps;
 public class InternalNativeMapsImpl {
     public void initialize() {
     }
-
+    
+    public void setPathColor(int color){
+    }
+    
+    public void restorePathDefaultColor(){
+    }
+    
+    public void setPathThickness(int thickness){
+    }
+    
+    public void restorePathDefaultThickness(){
+    }
+    
+    public void setPathGeodesic(boolean geodesic){
+    }
+    
+    public void restorePathDefaultGeodesic(){
+    }
+    
     public long beginPath() {
         return 0;
     }

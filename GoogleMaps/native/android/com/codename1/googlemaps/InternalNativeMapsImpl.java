@@ -61,6 +61,9 @@ public class InternalNativeMapsImpl implements LifecycleListener {
     private HashMap<Marker, Long> listeners = new HashMap<Marker, Long>();
     private static boolean supported = true;
     private HashMap<Long, Polyline> paths = new HashMap<Long, Polyline>();
+    private Integer pathColor;
+    private Integer pathThickness;
+    private Boolean pathGeodesic;
     private PolylineOptions currentPath;
     private LatLng lastPosition;
     private Point lastPoint;
@@ -1245,8 +1248,35 @@ public class InternalNativeMapsImpl implements LifecycleListener {
         return key;
     }
     
+    public void setPathColor(int color){
+        pathColor = color;
+    }
+    
+    public void restorePathDefaultColor(){
+        pathColor = null;
+    }
+    
+    public void setPathThickness(int thickness){
+        pathThickness = thickness;
+    }
+    
+    public void restorePathDefaultThickness(){
+        pathThickness = null;
+    }
+    
+    public void setPathGeodesic(boolean geodesic){
+        pathGeodesic = geodesic;
+    }
+    
+     public void restorePathDefaultGeodesic(){
+        pathGeodesic = null;
+    }
+        
     public long beginPath() {
         currentPath = new PolylineOptions();
+        if (pathColor!=null){currentPath.color(pathColor);}
+        if (pathThickness!=null){currentPath.width(pathThickness);}
+        if (pathGeodesic!=null){currentPath.geodesic(pathGeodesic);}
         return 1;
     }
     

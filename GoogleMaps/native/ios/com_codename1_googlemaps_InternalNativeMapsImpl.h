@@ -18,12 +18,18 @@
 #import "GoogleMaps/GoogleMaps.h"
 
 @interface com_codename1_googlemaps_InternalNativeMapsImpl : NSObject<GMSMapViewDelegate> {
-GMSMapView *mapView;
+    GMSMapView *mapView;
     int mapId;
+    UIColor pathColor;
+    int pathThickness;
+    BOOL pathGeodesic;
     CGPoint currentPoint;
     CLLocationCoordinate2D currentCoordinate;
     BOOL showMyLocation;
     BOOL rotateGesture;
+    BOOL scrollGesture;
+    BOOL tiltGesture;
+    BOOL zoomGesture;
 }
 
 -(BOOL)isSupported;
@@ -88,6 +94,12 @@ GMSMapView *mapView;
 
 -(void)setMarkerSize:(int)param param1:(int)param1;
 -(long long)addMarker:(NSData*)param param1:(double)param1 param2:(double)param2 param3:(NSString*)param3 param4:(NSString*)param4 param5:(BOOL)param5 param6:(float)param6 param7:(float)param7;
+-(void)setPathColor:(int)param;
+-(void)restorePathDefaultColor;
+-(void)setPathThickness:(int)param;
+-(void)restorePathDefaultThickness;
+-(void)setPathGeodesic:(BOOL)param;
+-(void)restorePathDefaultGeodesic;
 -(long long)beginPath;
 -(void)addToPath:(long long)param param1:(double)param1 param2:(double)param2;
 -(long long)finishPath:(long long)param;

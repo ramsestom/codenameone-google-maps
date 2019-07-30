@@ -39,6 +39,9 @@ extern float scaleValue;
         mapView.settings.compassButton = showMyLocation;
         mapView.settings.myLocationButton = showMyLocation;
         mapView.settings.rotateGestures = rotateGesture;
+        mapView.settings.scrollGestures = scrollGesture;
+        mapView.settings.tiltGestures = tiltGesture;
+        mapView.settings.zoomGestures = zoomGesture;
         mapView.delegate = self;
         [mapView retain];
         [pool release];
@@ -293,6 +296,7 @@ extern float scaleValue;
 }
 
 -(void)setScrollGesturesEnabled:(BOOL)param{
+    scrollGesture = param;
     dispatch_async(dispatch_get_main_queue(), ^{
         if(mapView != nil) {
             mapView.settings.scrollGestures = param;
@@ -311,6 +315,7 @@ extern float scaleValue;
 }
 
 -(void)setTiltGesturesEnabled:(BOOL)param{
+    tiltGesture = param;
     dispatch_async(dispatch_get_main_queue(), ^{
         if(mapView != nil) {
             mapView.settings.tiltGestures = param;
@@ -329,6 +334,7 @@ extern float scaleValue;
 }
 
 -(void)setZoomGesturesEnabled:(BOOL)param{
+    zoomGesture = param;
     dispatch_async(dispatch_get_main_queue(), ^{
         if(mapView != nil) {
             mapView.settings.zoomGestures = param;
@@ -347,6 +353,10 @@ extern float scaleValue;
 }
 
 -(void)setAllGesturesEnabled:(BOOL)param{
+    rotateGesture = param;
+    scrollGesture = param;
+    tiltGesture = param;
+    zoomGesture = param;
     dispatch_async(dispatch_get_main_queue(), ^{
         if(mapView != nil) {
             [mapView.settings setAllGesturesEnabled:param];
@@ -616,6 +626,35 @@ extern float scaleValue;
     return marker;
 }
 
+-(void)setPathColor:(int)param {
+    int blue = param & 0xff;
+    int green = param >> 8 & 0xff;
+    int red = param >> 16 & 0xff;
+    int alpha = param >> 24 & 0xff;
+    pathColor = [UIColor colorWithRed:red/255.f green:green/255.f blue:blue/255.f alpha:alpha/255.f];
+}
+
+-(void)restorePathDefaultColor {
+    pathColor = nil;
+}
+
+-(void)setPathThickness:(int)param {
+    pathThickness = param;
+}
+
+-(void)restorePathDefaultThickness {
+    pathThickness = 0;
+}
+
+-(void)setPathGeodesic:(BOOL)param {
+    pathGeodesic = param;
+}
+
+-(void)restorePathDefaultGeodesic {
+    pathGeodesic = NO;
+}
+
+
 -(long long)beginPath{
     GMSMutablePath *path = [GMSMutablePath path];
     return path;
@@ -631,6 +670,9 @@ extern float scaleValue;
     dispatch_async(dispatch_get_main_queue(), ^{
         GMSMutablePath *path = (GMSMutablePath*)param;
         polyline = [GMSPolyline polylineWithPath:path];
+        if (pathColor){polyline.strokeColor = pathColor;}
+        if (pathThickness>0){polyline.strokeWidth = pathThickness;}
+        polyline.geodesic = pathGeodesic;
         polyline.map = mapView;
     });
     return polyline;

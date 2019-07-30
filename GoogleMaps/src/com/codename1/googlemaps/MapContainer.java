@@ -86,7 +86,8 @@ public class MapContainer extends Container {
     
     private InternalNativeMaps internalNative;
     private MapComponent internalLightweightCmp;
-    private MapComponent dummyMapComponent; //dummy Mapcomponent (returning transparent tiles) used on top of javascript browsercomponent 
+    private Integer pathColor; //used by the internalLightweightCmp to know the color to use to draw next paths
+    private MapComponent dummyMapComponent; //dummy Mapcomponent (returning transparent tiles) used on top of javascript browsercomponent and allowing to return synchroneously for get methods
     private BrowserComponent internalBrowser;
     private JavascriptContext browserContext;
     private ArrayList<MapListener> listeners;
@@ -181,10 +182,10 @@ public class MapContainer extends Container {
             debug = true;
         }
         if (provider == null && "win".equals(Display.getInstance().getPlatformName())) {
-            
             // Right now UWP gives an NPE when we use the internal browser
             // so disabling it for now.
-            provider = new OpenStreetMapProvider();
+        	if (htmlApiKey != null) { provider = new GoogleMapsProvider(htmlApiKey); }
+        	else { provider = new OpenStreetMapProvider(); }
         }
         internalNative = (InternalNativeMaps)NativeLookup.create(InternalNativeMaps.class);
         if(internalNative != null) {
@@ -240,9 +241,8 @@ public class MapContainer extends Container {
             mapWrapper.addComponent(BorderLayout.CENTER, internalLightweightCmp);
         }
         else {
-            dummyMapComponent = new MapComponent(new OpenStreetMapProvider(){
+            dummyMapComponent = new MapComponent(new GoogleMapsProvider(htmlApiKey){
                 Image img;
-
 
                 @Override
                 public Tile tileFor(BoundingBox bbox) {
@@ -250,10 +250,13 @@ public class MapContainer extends Container {
                     if (img == null) {
                         img = Image.createImage(size.getWidth(), size.getHeight());
                     }
-
                     return new Tile(size, bbox, img);
                 }
 
+                @Override
+                public int maxZoomLevel() {
+                    return 22; 
+                }
             });
             internalBrowser = new BrowserComponent();
             internalBrowser.getAllStyles().setPadding(0,0,0,0);
@@ -434,14 +437,15 @@ public class MapContainer extends Container {
                         public void onSucess(BrowserComponent.JSRef value) {
                             if ("null".equals(value.getValue()) || value.getJSType() == BrowserComponent.JSType.UNDEFINED) {
                                 internalBrowser.execute("com_codename1_googlemaps_MapContainer_onReady=function(bridge){callback.onSuccess(bridge)};", new SuccessCallback<BrowserComponent.JSRef>() {
-
                                     public void onSucess(BrowserComponent.JSRef value) {
                                         browserBridge.ready = true;
+                                        syncBrowserAndDummyDefaultValues();
                                         browserBridge.ready(null);
                                     }
                                 });
                             } else {
                                 browserBridge.ready = true;
+                                syncBrowserAndDummyDefaultValues();
                                 browserBridge.ready(null);
                             }
                         }
@@ -461,8 +465,17 @@ public class MapContainer extends Container {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        
     }
+    
+    
+    private void syncBrowserAndDummyDefaultValues() {
+    	internalBrowser.execute(BRIDGE+".setMapType(${0})", new Object[]{dummyType}, jsres->{});
+    	internalBrowser.execute(BRIDGE+".setCameraPosition(${0}, ${1})", new Object[]{dummyMapComponent.getCenter().getLatitude(), dummyMapComponent.getCenter().getLongitude()});
+    	internalBrowser.execute(BRIDGE+".setMinZoom(${0})", new Object[]{dummyMapComponent.getMinZoomLevel()});
+    	internalBrowser.execute(BRIDGE+".setMaxZoom(${0})", new Object[]{dummyMapComponent.getMaxZoomLevel()});
+    	internalBrowser.execute(BRIDGE+".setZoom(${0})", new Object[]{dummyMapComponent.getZoomLevel()});
+    }
+        
     
     static void mapUpdated(int mapId) {
         final MapContainer mc = instances.get(mapId);
@@ -908,6 +921,56 @@ public class MapContainer extends Container {
     }
     
     
+    /** Set the color to use for next paths. Seting this to null restore the platform's default path color */
+    public void setPathColor(Integer argb) {
+    	 if(internalNative != null) {
+             if (argb!=null){internalNative.setPathColor(argb);}
+             else {internalNative.restorePathDefaultColor();}
+         } else {
+             if (internalLightweightCmp != null) {
+            	 pathColor = argb;
+             } else {
+                // browserBridge.ready(()->{
+                     internalBrowser.execute(BRIDGE+".setPathColor("+((argb==null)?"":argb)+")", jsres->{});
+                // });
+            }
+         }
+    }
+    
+    /** Set the thickness to use for next paths. Seting this to null restore the platform's default path color */
+    public void setPathThickness(Integer thickness) {
+    	 if(internalNative != null) {
+             if (thickness!=null){internalNative.setPathThickness(thickness);}
+             else {internalNative.restorePathDefaultThickness();}
+         } else {
+             if (internalLightweightCmp != null) {
+            	//TODO. Unsupported yet
+             } else {
+                // browserBridge.ready(()->{
+                     internalBrowser.execute(BRIDGE+".setPathThickness("+((thickness==null)?"":thickness)+")", jsres->{});
+                // });
+            }
+         }
+    }
+    
+    
+    /** Set the thickness to use for next paths. Seting this to null restore the platform's default path color */
+    public void setPathGeodesic(Boolean geodesic) {
+    	 if(internalNative != null) {
+             if (geodesic!=null){internalNative.setPathGeodesic(geodesic);}
+             else {internalNative.restorePathDefaultGeodesic();}
+         } else {
+             if (internalLightweightCmp != null) {
+            	//TODO. Unsupported yet
+             } else {
+                // browserBridge.ready(()->{
+                     internalBrowser.execute(BRIDGE+".setPathGeodesic("+((geodesic==null)?"":geodesic)+")", jsres->{});
+                // });
+            }
+         }
+    }
+    
+    
     /**
      * Draws a path on the map
      * @param path the path to draw on the map
@@ -927,6 +990,7 @@ public class MapContainer extends Container {
         } else {
             if(internalLightweightCmp != null) {
                 LinesLayer ll = new LinesLayer();
+                if (pathColor!=null) {ll.lineColor(pathColor);}
                 ll.addLineSegment(path);
 
                 internalLightweightCmp.addLayer(ll);
@@ -1152,7 +1216,7 @@ public class MapContainer extends Container {
             internalNative.setMaxZoom(zoom);
         } else {
             //javascript or lightweighted map components do not support float zoom values. So convert it to int
-            int izoom = Math.round(zoom);
+            int izoom = (int) Math.ceil(zoom);
             if(internalLightweightCmp != null) {
                 internalLightweightCmp.setMaxZoomLevel(izoom);
             } else {
@@ -1195,7 +1259,7 @@ public class MapContainer extends Container {
             internalNative.setMinZoom(zoom);
         } else {
             //javascript or lightweighted map components do not support float zoom values. So convert it to int
-            int izoom = Math.round(zoom);
+            int izoom = (int) Math.floor(zoom);
             if(internalLightweightCmp != null) {
                 internalLightweightCmp.setMinZoomLevel(izoom);
             } else {
