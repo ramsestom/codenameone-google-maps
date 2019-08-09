@@ -23,6 +23,7 @@ import com.codename1.io.Util;
 //import com.codename1.javascript.JSFunction;
 //import com.codename1.javascript.JSObject;
 import com.codename1.javascript.JavascriptContext;
+import com.codename1.location.LatLng;
 import com.codename1.location.Location;
 import com.codename1.location.LocationManager;
 import com.codename1.maps.BoundingBox;
@@ -40,8 +41,6 @@ import com.codename1.maps.providers.MapProvider;
 import com.codename1.maps.providers.OpenStreetMapProvider;
 import com.codename1.system.NativeLookup;
 import com.codename1.ui.BrowserComponent;
-import com.codename1.ui.BrowserComponent.JSRef;
-import com.codename1.ui.BrowserComponent.JSType;
 import com.codename1.ui.Component;
 import static com.codename1.ui.ComponentSelector.$;
 import com.codename1.ui.Display;
@@ -62,6 +61,7 @@ import com.codename1.util.SuccessCallback;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -70,6 +70,7 @@ import java.util.List;
  *
  * @author Shai Almog
  */
+@SuppressWarnings("deprecation")
 public class MapContainer extends Container {
     private boolean debug;
   
@@ -170,7 +171,11 @@ public class MapContainer extends Container {
         mapWrapper = new Container(new BorderLayout());
         
         add(mapWrapper);
-        mapLayoutWrapper = new Container();
+        mapLayoutWrapper = new Container() {
+        	public void setShouldLayout(boolean layout) {
+        		super.setShouldLayout(layout);
+        	}
+        };
         mapLayoutWrapper.setScrollableX(false);
         mapLayoutWrapper.setScrollableY(false);
         $(mapWrapper, mapLayoutWrapper).selectAllStyles().setPadding(0).setMargin(0).setBorder(Border.createEmpty());
@@ -604,14 +609,14 @@ public class MapContainer extends Container {
      */
     public static class MarkerOptions {
         private final EncodedImage icon;
-        private final Coord location;
+        private final LatLng location;
         private String text="";
         private String longText="";
         private ActionListener onClick;
         private float anchorU = 0.5f;
         private float anchorV = 1f;
         
-        public MarkerOptions(Coord coord, EncodedImage icon) {
+        public MarkerOptions(LatLng coord, EncodedImage icon) {
             this.location = coord;
             this.icon = icon;
 
@@ -630,7 +635,7 @@ public class MapContainer extends Container {
          * Gets the location of this marker
          * @return the location
          */
-        public Coord getLocation() {
+        public LatLng getLocation() {
             return location;
         }
 
@@ -745,11 +750,15 @@ public class MapContainer extends Container {
      * @param location The location of marker.
      * @param anchorU The horizontal alignment of the marker. 0.0 = align top edge with coord. 0.5 = align center.  1.0 = align bottom edge with coord.
      * @param anchorV The vertical alignment of the marker.  0.0 = align top edge with coord. 0.5 = align center.  1.0 = align bottom edge with coord.
+     * @return A MapObject that can be used for later removing the marker.
      */
-    public void addMarker(Component marker, Coord location, float anchorU, float anchorV) {
+    public MapObject addMarker(Component marker, LatLng location, float anchorU, float anchorV) {
         mapLayoutWrapper.add(location, marker);
         MapLayout.setHorizontalAlignment(marker, anchorU);
         MapLayout.setVerticalAlignment(marker, anchorV);
+        MapObject o = new MapObject();
+        o.componentMarker = marker;
+        return o;
         
     }
     
@@ -759,11 +768,8 @@ public class MapContainer extends Container {
      * @param location The location of the marker.
      * @return A MapObject that can be used for later removing the marker.
      */
-    public MapObject addMarker(Component marker, Coord location) {
-        addMarker(marker, location, 0.5f, 1f);
-        MapObject o = new MapObject();
-        o.componentMarker = marker;
-        return o;
+    public MapObject addMarker(Component marker, LatLng location) {
+        return addMarker(marker, location, 0.5f, 1f);
     }
     
     /**
@@ -775,7 +781,7 @@ public class MapContainer extends Container {
      * @param onClick will be invoked when the user clicks the marker. Important: events are only sent when the native map is in initialized state
      * @return marker reference object that should be used when removing the marker 
      */
-    public MapObject addMarker(EncodedImage icon, Coord location, String text, String longText, final ActionListener onClick) {
+    public MapObject addMarker(EncodedImage icon, LatLng location, String text, String longText, final ActionListener onClick) {
         return addMarker(new MarkerOptions(location, icon)
                 .text(text)
                 .longText(longText)
@@ -791,7 +797,7 @@ public class MapContainer extends Container {
     public MapObject addMarker(MarkerOptions opts) {
         //public MapObject addMarker(EncodedImage icon, Coord location, String text, String longText, final ActionListener onClick) {
         EncodedImage icon = opts.getIcon();
-        Coord location = opts.getLocation();
+        LatLng location = opts.getLocation();
         String text = opts.getText();
         String longText = opts.getLongText();
         ActionListener onClick = opts.getOnClick();
@@ -813,7 +819,7 @@ public class MapContainer extends Container {
             return o;
         } else {
             if(internalLightweightCmp != null) {
-                PointLayer pl = new PointLayer(location, text, icon);
+                PointLayer pl = new PointLayer(new Coord(location.getLatitude(), location.getLongitude()), text, icon);
                 if(points == null) {
                     points = new PointsLayer();
                     internalLightweightCmp.addLayer(points);
@@ -902,21 +908,39 @@ public class MapContainer extends Container {
      * Removes a component marker that was previously added using {@link #addMarker(com.codename1.ui.Component, com.codename1.maps.Coord) }
      * @param marker 
      */
+    public void removeMarker(MapObject marker) {
+        if (markers.remove(marker)) {
+        	mapLayoutWrapper.removeComponent(marker.componentMarker);
+        }
+    }    
+    
+
     public void removeMarker(Component marker) {
-        mapLayoutWrapper.removeComponent(marker);
+    	if (marker!=null) {
+    		Iterator<MapObject> tpit = markers.iterator();
+    		while (tpit.hasNext()) {
+    			MapObject mo = tpit.next();
+    			if (marker.equals(mo.componentMarker)) {
+    				tpit.remove();
+    				mapLayoutWrapper.removeComponent(marker);
+    			}
+    		}
+    	}
     }
-        
+    
     /**
      * Update the location of a marker previously added to the map
      * @param marker
      * @param location 
      */
-    public void updateMarkerLocation(Component marker, Coord location) {
+    public void updateMarkerLocation(Component marker, LatLng location) {
         if (marker.getParent() != mapLayoutWrapper){
             addMarker(marker, location);
         }
         else {
             mapLayoutWrapper.getLayout().addLayoutComponent(location, marker, mapLayoutWrapper);
+            mapLayoutWrapper.revalidate();
+            //mapLayoutWrapper.setShouldLayout(true);
         }
     }
     
@@ -976,10 +1000,10 @@ public class MapContainer extends Container {
      * @param path the path to draw on the map
      * @return a map object instance that allows us to remove the drawn path
      */
-    public MapObject addPath(Coord... path) {
+    public MapObject addPath(LatLng... path) {
         if(internalNative != null) {
             long key = internalNative.beginPath();
-            for(Coord c : path) {
+            for(LatLng c : path) {
                 internalNative.addToPath(key, c.getLatitude(), c.getLongitude());
             }
             key = internalNative.finishPath(key);
@@ -991,7 +1015,12 @@ public class MapContainer extends Container {
             if(internalLightweightCmp != null) {
                 LinesLayer ll = new LinesLayer();
                 if (pathColor!=null) {ll.lineColor(pathColor);}
-                ll.addLineSegment(path);
+                Coord[] coords = new Coord[path.length];
+                for(int i=0; i<path.length; i++) {
+                	LatLng pos = path[i];
+                	coords[i] = new Coord(pos.getLatitude(), pos.getLongitude());
+                }
+                ll.addLineSegment(coords);
 
                 internalLightweightCmp.addLayer(ll);
                 MapObject o = new MapObject();
@@ -1003,7 +1032,7 @@ public class MapContainer extends Container {
                 StringBuilder json = new StringBuilder();
                 json.append("[");
                 boolean first = true;
-                for(Coord c : path) {
+                for(LatLng c : path) {
                     if (first) {
                         first = false;
                     } else {
@@ -1034,7 +1063,7 @@ public class MapContainer extends Container {
      */
     public void removeMapObject(MapObject obj) {
         if (obj.componentMarker != null) {
-            removeMarker(obj.componentMarker);
+            removeMarker(obj);
             return;
         }
         markers.remove(obj);
@@ -1604,7 +1633,7 @@ public class MapContainer extends Container {
      * @param c the coordinate
      * @return the x/y position in component relative position
      */
-    public Point getScreenCoordinate(Coord c) {
+    public Point getScreenCoordinate(LatLng c) {
         return getScreenCoordinate(c.getLatitude(), c.getLongitude());
     }
 
@@ -1615,14 +1644,13 @@ public class MapContainer extends Container {
      * @param coords The coordinates to convert to points.
      * @return A list of points relative to (0,0) of the map container.
      */
-    public List<Point> getScreenCoordinates(List<Coord> coords) {
+    public List<Point> getScreenCoordinates(List<LatLng> coords) {
         List<Point> out = new ArrayList<Point>(coords.size());
         BoundingBox bbox = getBoundingBox();
         Mercator proj = new Mercator();
         BoundingBox projectedBox = proj.fromWGS84(bbox);
-        for (Coord crd : coords) {
-        
-            Coord projectedCrd = proj.fromWGS84(crd);
+        for (LatLng crd : coords) {
+            Coord projectedCrd = Mercator.forwardMercator(crd.getLatitude(), crd.getLongitude()); //proj.fromWGS84(new Coord(crd.getLatitude(), crd.getLongitude()));
             Point p;
             if (getWidth() <= 0 || getHeight() <= 0) {
                 p = new Point(-100, -100);

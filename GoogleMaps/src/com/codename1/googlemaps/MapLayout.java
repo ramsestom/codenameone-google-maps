@@ -7,9 +7,9 @@ package com.codename1.googlemaps;
 
 import com.codename1.googlemaps.MapContainer.MapObject;
 import com.codename1.googlemaps.MapContainer.MarkerOptions;
+import com.codename1.location.LatLng;
 import com.codename1.maps.Coord;
 import com.codename1.maps.MapListener;
-import com.codename1.ui.CN;
 import static com.codename1.ui.CN.callSerially;
 import com.codename1.ui.Component;
 import static com.codename1.ui.ComponentSelector.$;
@@ -21,7 +21,6 @@ import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.geom.Point;
 import com.codename1.ui.layouts.Layout;
-import com.codename1.ui.util.UITimer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,7 +120,7 @@ public class MapLayout extends Layout implements MapListener {
         @Override
         public void addLayoutComponent(Object value, Component comp, Container c) {
             //super.addLayoutComponent(value, comp, c);
-            comp.putClientProperty(COORD_KEY, (Coord) value);
+            comp.putClientProperty(COORD_KEY, (LatLng) value);
             comp.putClientProperty(POINT_KEY, null);
         }
 
@@ -158,7 +157,7 @@ public class MapLayout extends Layout implements MapListener {
             if(v == null) {
                 v = 0f;
             }
-            MarkerOptions markerOpts = new MarkerOptions((Coord)c.getClientProperty(COORD_KEY), img)
+            MarkerOptions markerOpts = new MarkerOptions((LatLng)c.getClientProperty(COORD_KEY), img)
                     .anchorU(h)
                     .anchorV(v);
             
@@ -268,7 +267,7 @@ public class MapLayout extends Layout implements MapListener {
             int parentX = 0;
             int parentY = 0;
             for (Component current : parent) {
-                Coord crd = (Coord) current.getClientProperty(COORD_KEY);
+            	LatLng crd = (LatLng) current.getClientProperty(COORD_KEY);
                 Point p = (Point) current.getClientProperty(POINT_KEY);
                 if (p == null) {
                     p = map.getScreenCoordinate(crd);
@@ -301,11 +300,11 @@ public class MapLayout extends Layout implements MapListener {
                     inUpdate = true;
 
                     try {
-                        List<Coord> coords = new ArrayList<>();
+                        List<LatLng> coords = new ArrayList<>();
                         List<Component> cmps = new ArrayList<>();
                         int len = actual.getComponentCount();
                         for (Component current : actual) {
-                            Coord crd = (Coord) current.getClientProperty(COORD_KEY);
+                        	LatLng crd = (LatLng) current.getClientProperty(COORD_KEY);
                             coords.add(crd);
                             cmps.add(current);
                         }

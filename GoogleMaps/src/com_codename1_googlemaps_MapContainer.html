@@ -210,6 +210,7 @@
                 
                 
                 setCameraPosition: function(lat, lon){
+                	this.initOrigin = {lat: lat, lng: lon};
                     this.ready(function(){
                         this.map.setCenter(new google.maps.LatLng(lat, lon));
                     });
@@ -225,6 +226,7 @@
                 },
                 
                 setZoom: function(zoom){ 
+                	this.initZoom = Math.round(zoom);
                     this.ready(function(){
                         this.map.setZoom(Math.round(zoom)); //javascript google map api is expecting integer zoom levels as it is working with tile images and not vectors
                     });
@@ -238,11 +240,15 @@
                     return out;
                 },
                 
-                setCamera: function(lat, lon, zoom){ //TODO: renomer en setZoom
-                    this.ready(function(){
-                        this.map.setZoom(zoom);
-                        this.map.setCenter(new google.maps.LatLng(lat, lon));
-                    });
+                setCamera: function(lat, lon, zoom){ 
+                	this.setZoom(zoom);
+                	this.setCameraPosition(lat, lon);
+//                 	this.initOrigin = {lat: lat, lng: lon};
+//                 	this.initZoom = Math.round(zoom);
+//                     this.ready(function(){
+//                         this.map.setZoom(Math.round(zoom));
+//                         this.map.setCenter(new google.maps.LatLng(lat, lon));
+//                     });
                 },
                 
                 setMaxZoom: function(zoom){
@@ -525,6 +531,9 @@
             
             };
             
+			bridge.initZoom = 8;            
+            bridge.initOrigin = {lat: -34.397, lng: 150.644};
+            
             window.bridge_proto = bridge;
             try {
                 window.com_codename1_googlemaps_MapContainer_bridge = Object.create(bridge, {
@@ -558,16 +567,16 @@
             var bridge = window.com_codename1_googlemaps_MapContainer_bridge;
 
             var google = window.google;
-            var origin = {lat: -34.397, lng: 150.644};
+            //var origin = {lat: -34.397, lng: 150.644};
 
             // Leave the following commented-out line here.  It is replaced
             // by mapcontainer with the actual origin at runtime.
             //origin = MAPCONTAINER_ORIGIN
 
             var map = new google.maps.Map(document.getElementById('map'), {
-              center: origin,
-              scrollwheel: false,
-              zoom: 8
+              center: bridge.initOrigin,
+              zoom: bridge.initZoom,
+              scrollwheel: false
             });
             bridge.map = map;
 
